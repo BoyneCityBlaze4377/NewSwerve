@@ -1,7 +1,7 @@
 package frc.robot;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.config.RobotConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -66,7 +66,7 @@ public final class Constants {
     public static final double maxSpeedMetersPerSecond = 4.25; //4.5 true max
     public static final double maxAccelerationMetersPerSecondSquared = 4;
     public static final double maxRotationSpeedRadiansPerSecond = Math.PI * .8;
-    public static final double maxRotationAccelerationRadiansPerSecondSquared = Math.PI;
+    public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
 
     public static final double translationalDeadband = .1;
     public static final double rotationalDeadband = .4;
@@ -147,7 +147,7 @@ public final class Constants {
 
     public static final double kMaxOutput = 0.95;
   
-    public static final IdleMode angleNeutralMode = IdleMode.kBrake;
+    public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
   }
 
   public class FieldConstants {
@@ -180,6 +180,5 @@ public final class Constants {
 
   public class RemyConstants {
     public static RobotConfig config;
-    
   }
 }

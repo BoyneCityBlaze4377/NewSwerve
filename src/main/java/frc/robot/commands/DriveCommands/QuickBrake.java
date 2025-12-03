@@ -19,7 +19,7 @@ public class QuickBrake extends Command {
   @Override
   public void initialize() {
     m_driveTrain.brakeAll();
-    mode = m_driveTrain.getIdleMode();
+    mode = m_driveTrain.getNeutralMode();
   }
 
   // Called every time the scheduler runs while the command is scheduled.
@@ -32,7 +32,7 @@ public class QuickBrake extends Command {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    m_driveTrain.setIdleMode(mode);
+    m_driveTrain.setNeutralMode(mode);
   }
 
   // Returns true when the command should end.

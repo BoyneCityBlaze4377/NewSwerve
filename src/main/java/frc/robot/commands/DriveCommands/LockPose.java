@@ -24,7 +24,7 @@ public class LockPose extends Command {
   public void initialize() {
     m_driveTrain.brakeAll();
     m_driveTrain.lockPose();
-    mode = m_driveTrain.getIdleMode();
+    mode = m_driveTrain.getNeutralMode();
 
   }
 
@@ -37,7 +37,7 @@ public class LockPose extends Command {
   // Called once the command ends or is interrupted.
   @Override
   public void end(boolean interrupted) {
-    m_driveTrain.setIdleMode(mode);
+    m_driveTrain.setNeutralMode(mode);
   }
 
   // Returns true when the command should end.

@@ -299,7 +299,7 @@ public class DriveTrain extends SubsystemBase {
                                          0, 0, 0, 0, 0);
     
     // Update random stuff
-    isBrake = m_frontLeft.getIdleMode() == NeutralModeValue.Brake;
+    isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
 
     isBlue = m_alliance == Alliance.Blue;
 
@@ -559,21 +559,21 @@ public class DriveTrain extends SubsystemBase {
     m_backRight.coast();
   }
 
-  /** @return The current IdleMode of the {@link DriveTrain} */
-  public synchronized NeutralModeValue getIdleMode() {
-    return m_frontLeft.getIdleMode();
+  /** @return The current NeutralMode of the {@link DriveTrain} */
+  public synchronized NeutralModeValue getNeutralMode() {
+    return m_frontLeft.getNeutralMode();
   }
 
   /**
-   * Sets the IdleMode of the {@link DriveTrain}
+   * Sets the NeutralMode of the {@link DriveTrain}
    * 
-   * @param mode The desired IdleMode for the {@link DriveTrain}
+   * @param mode The desired NeutralMode for the {@link DriveTrain}
    */
-  public synchronized void setIdleMode(NeutralModeValue mode) {
-    m_frontLeft.setIdleMode(mode);
-    m_frontRight.setIdleMode(mode);
-    m_backLeft.setIdleMode(mode);
-    m_backRight.setIdleMode(mode);
+  public synchronized void setNeutralMode(NeutralModeValue mode) {
+    m_frontLeft.setNeutralMode(mode);
+    m_frontRight.setNeutralMode(mode);
+    m_backLeft.setNeutralMode(mode);
+    m_backRight.setNeutralMode(mode);
   }
 
   /** Stops drive motors for all modules */

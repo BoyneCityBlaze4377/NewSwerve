@@ -219,7 +219,7 @@ public class SwerveModule {
 
   /** Sets the default configuration of the angle motor. */
   private void configAngleMotorDefault() {
-    m_turnConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    m_turnConfig.MotorOutput.NeutralMode = ModuleConstants.angleNeutralMode;
     m_turnConfig.MotorOutput.Inverted = (turnReversed ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive);
 
     configAngleMotor();
@@ -259,17 +259,17 @@ public class SwerveModule {
     lastAngle = lockedState.angle;
   }
 
-  /** @return The current IdleMode of the Module. */
-  public NeutralModeValue getIdleMode() {
+  /** @return The current NeutralMode of the Module. */
+  public NeutralModeValue getNeutralMode() {
     return m_driveConfig.MotorOutput.NeutralMode;
   }
 
   /** 
-   * Sets the module's drive motor's IdleMode.
+   * Sets the module's drive motor's NeutralMode.
    * 
-   * @param mode The IdleMode to set the module's drive motor to.
+   * @param mode The NeutralMode to set the module's drive motor to.
    */
-  public void setIdleMode(NeutralModeValue mode) {
+  public void setNeutralMode(NeutralModeValue mode) {
     m_driveConfig.MotorOutput.NeutralMode = mode;
     configDriveMotor();
   }
