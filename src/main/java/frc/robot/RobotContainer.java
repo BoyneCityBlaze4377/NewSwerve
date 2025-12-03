@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants.IOConstants;
 import frc.robot.commands.Auton.NoAuton;
-import frc.robot.commands.DriveCommands.AutoAimDrive;
 import frc.robot.commands.DriveCommands.ForceRobotOrientation;
 import frc.robot.commands.DriveCommands.LockPose;
 import frc.robot.commands.DriveCommands.QuickBrake;
@@ -61,7 +60,6 @@ public class RobotContainer {
   private final Command QuickBrake = new QuickBrake(m_driveTrain);
   private final Command SlowMode = new SlowMode(m_driveTrain);
   private final Command StraightDrive = new StraightDrive(m_driveTrain, m_driverStick);
-  private final Command AutoAimDrive = new AutoAimDrive(m_driveTrain);
   private final Command RobotOrient = new ForceRobotOrientation(m_driveTrain);
 
   /** AUTONS */
@@ -105,9 +103,7 @@ public class RobotContainer {
     new JoystickButton(m_driverStick, IOConstants.lockPoseButtonID).whileTrue(LockPose);
     new JoystickButton(m_driverStick, IOConstants.switchOrientationButtonID).onTrue(SwitchOrientation);
     new JoystickButton(m_driverStick, IOConstants.straightDriveButtonID).whileTrue(StraightDrive);
-    new JoystickButton(m_driverStick, IOConstants.autoDriveButtonID).whileTrue(AutoAimDrive);
     new JoystickButton(m_driverStick, IOConstants.robotOrientButtonID).whileTrue(RobotOrient);
-
     //Testing
   }
 

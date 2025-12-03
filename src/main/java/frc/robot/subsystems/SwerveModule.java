@@ -1,12 +1,10 @@
 package frc.robot.subsystems;
 
-import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-import com.revrobotics.RelativeEncoder;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -16,8 +14,6 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 
 import frc.robot.Constants.DriveConstants;
@@ -27,14 +23,11 @@ import frc.robot.Constants.ModuleConstants;
 public class SwerveModule {
   private final String m_name;
 
-  private final SparkMax m_driveMotor;
-  private final SparkMax m_turningMotor;
+  private final TalonFX m_driveMotor, m_turningMotor;
 
-  private final RelativeEncoder m_driveEncoder, m_turningEncoder;
+  private final TalonFXConfiguration m_driveConfig, m_turnConfig;
 
-  private final SparkMaxConfig m_driveConfig, m_turnConfig;
-
-  private final AnalogInput absoluteEncoder;
+  private final CANcoder absoluteEncoder;
 
   private double AnalogEncoderOffset, turningFactor;
   private final boolean driveInverted, turnReversed, absReversed;
@@ -67,14 +60,11 @@ public class SwerveModule {
     m_name = name;
     
     /** Motors */
-    m_driveMotor = new SparkMax(driveMotorChannel, MotorType.kBrushless);
-    m_turningMotor = new SparkMax(turningMotorChannel, MotorType.kBrushless);
+    m_driveMotor = new TalonFX(driveMotorChannel);
+    m_turningMotor = new TalonFX(turningMotorChannel);
 
-    m_driveConfig = new SparkMaxConfig();
-    m_turnConfig = new SparkMaxConfig();
-
-    m_driveEncoder = m_driveMotor.getEncoder();
-    m_turningEncoder = m_turningMotor.getEncoder();
+    m_driveConfig = new TalonFXConfiguration();
+    m_turnConfig = new TalonFXConfiguration();
     
     driveInverted = driveMotorReversed;
     turnReversed = turningMotorReversed;
@@ -93,7 +83,7 @@ public class SwerveModule {
     filter = new SlewRateLimiter(2);
 
     /** Absolute Encoder */
-    absoluteEncoder = new AnalogInput(turningEncoderChannel);
+    absoluteEncoder = new CANcoder(turningEncoderChannel);
     AnalogEncoderOffset = encoderOffset;
     absReversed = absoluteEncoderReversed;
 
@@ -114,19 +104,13 @@ public class SwerveModule {
 
   /** @return The current state of the module. */
   public SwerveModuleState getState() {
-    return new SwerveModuleState(m_driveEncoder.getVelocity(), getAngle());
+    return new SwerveModuleState(m_driveMotor.getVelocity().getValueAsDouble(), getAngle());
   }
 
   /** @return The current position of the module. */
   public SwerveModulePosition getPosition() {
-    return new SwerveModulePosition(m_driveEncoder.getPosition(), new Rotation2d(Units.degreesToRadians(getAbsoluteEncoder())));
-  }
-
-  /** @deprecated Use getAbsoluteEncoder() instead
-   * @return The position of the relatoce encoder of the turning motor
-   */
-  public double getEncoderPos() {
-    return m_turningEncoder.getPosition();
+    return new SwerveModulePosition(m_driveMotor.getPosition().getValueAsDouble(), 
+                                    new Rotation2d(Units.degreesToRadians(getAbsoluteEncoder())));
   }
 
   /**
@@ -166,17 +150,16 @@ public class SwerveModule {
 
   /** Resets all of the SwerveModule's encoders. */
   public void resetEncoders() {
-    m_driveEncoder.setPosition(0);
-    m_turningEncoder.setPosition(getAbsoluteEncoder());
+    m_driveMotor.setPosition(0);
   }
 
   /** @return The drive motor of the module. */
-  public SparkMax getDriveMotor() {
+  public TalonFX getDriveMotor() {
     return m_driveMotor;
   }
 
   /** @return The turn motor of the module. */
-  public SparkMax getTurnMotor() {
+  public TalonFX getTurnMotor() {
     return m_turningMotor;
   }
 
@@ -192,8 +175,7 @@ public class SwerveModule {
 
   /** @return The angle, in degrees, of the module. */
   public double getAbsoluteEncoder() {
-    double angle = absoluteEncoder.getAverageVoltage() / RobotController.getVoltage5V();
-    angle *= 360;
+    double angle = absoluteEncoder.getPosition().getValueAsDouble() / 360;
     angle -= AnalogEncoderOffset;
     angle = MathUtil.inputModulus(angle, -180, 180);
     return (absReversed ? -1 : 1) * angle;
@@ -210,37 +192,35 @@ public class SwerveModule {
 
   /** @return The distance the drive motor has moved. */
   public double getDistance() {
-    return m_driveEncoder.getPosition();
+    return m_driveMotor.getPosition().getValueAsDouble();
   }
 
   /** Sets the module's drive motor's idle mode to brake. */
   public void brake() {
-    m_driveConfig.idleMode(IdleMode.kBrake);
+    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     configDriveMotor();
   }
 
   /** Sets the module's drive motor's idle mode to coast. */
   public void coast() {
-    m_driveConfig.idleMode(IdleMode.kCoast);
+    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     configDriveMotor();
   }
 
   /** Sets the SparkMaxConfig of the turning motor to m_turnConfig */
   public void configAngleMotor() {
-    m_turningMotor.configure(m_turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    m_turningMotor.getConfigurator().apply(m_turnConfig);
   }
 
   /** Sets the SparkMaxConfig of the drive motor to m_driveConfig */
   public void configDriveMotor() {
-    m_driveMotor.configure(m_driveConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
+    m_driveMotor.getConfigurator().apply(m_turnConfig);
   }
 
   /** Sets the default configuration of the angle motor. */
   private void configAngleMotorDefault() {
-    m_turnConfig.idleMode(ModuleConstants.angleNeutralMode);
-    m_turnConfig.inverted(turnReversed);
-    m_turnConfig.smartCurrentLimit(ModuleConstants.angleContinuousCurrentLimit);
-    m_turnConfig.voltageCompensation(ModuleConstants.voltageComp);
+    m_turnConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    m_turnConfig.MotorOutput.Inverted = (turnReversed ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive);
 
     configAngleMotor();
     Timer.delay(1);
@@ -250,11 +230,13 @@ public class SwerveModule {
   private void configDriveMotorDefault() {
     // Set the distance per pulse for the drive encoder. We can simply use the
     // distance traveled for one rotation of the wheel divided by the encoder resolution.
-    m_driveConfig.encoder.velocityConversionFactor(ModuleConstants.driveMotorConversionFactor/60);
-    m_driveConfig.encoder.positionConversionFactor(ModuleConstants.driveMotorConversionFactor);
+    
+    // m_driveConfig.encoder.velocityConversionFactor(ModuleConstants.driveMotorConversionFactor/60);
+    // m_driveConfig.encoder.positionConversionFactor(ModuleConstants.driveMotorConversionFactor);
 
-    m_driveConfig.idleMode(IdleMode.kBrake);
-    m_driveConfig.inverted(driveInverted);
+    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    m_driveConfig.MotorOutput.Inverted = (driveInverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive);
+    m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
     Timer.delay(1);
     configDriveMotor();
@@ -278,8 +260,8 @@ public class SwerveModule {
   }
 
   /** @return The current IdleMode of the Module. */
-  public IdleMode getIdleMode() {
-    return m_driveMotor.configAccessor.getIdleMode();
+  public NeutralModeValue getIdleMode() {
+    return m_driveConfig.MotorOutput.NeutralMode;
   }
 
   /** 
@@ -287,8 +269,8 @@ public class SwerveModule {
    * 
    * @param mode The IdleMode to set the module's drive motor to.
    */
-  public void setIdleMode(IdleMode mode) {
-    m_driveConfig.idleMode(mode);
+  public void setIdleMode(NeutralModeValue mode) {
+    m_driveConfig.MotorOutput.NeutralMode = mode;
     configDriveMotor();
   }
 }

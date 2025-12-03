@@ -3,11 +3,12 @@ package frc.robot.subsystems;
 import java.util.Map;
 import java.util.Optional;
 
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
@@ -298,7 +299,7 @@ public class DriveTrain extends SubsystemBase {
                                          0, 0, 0, 0, 0);
     
     // Update random stuff
-    isBrake = m_frontLeft.getIdleMode() == IdleMode.kBrake;
+    isBrake = m_frontLeft.getIdleMode() == NeutralModeValue.Brake;
 
     isBlue = m_alliance == Alliance.Blue;
 
@@ -559,7 +560,7 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /** @return The current IdleMode of the {@link DriveTrain} */
-  public synchronized IdleMode getIdleMode() {
+  public synchronized NeutralModeValue getIdleMode() {
     return m_frontLeft.getIdleMode();
   }
 
@@ -568,7 +569,7 @@ public class DriveTrain extends SubsystemBase {
    * 
    * @param mode The desired IdleMode for the {@link DriveTrain}
    */
-  public synchronized void setIdleMode(IdleMode mode) {
+  public synchronized void setIdleMode(NeutralModeValue mode) {
     m_frontLeft.setIdleMode(mode);
     m_frontRight.setIdleMode(mode);
     m_backLeft.setIdleMode(mode);

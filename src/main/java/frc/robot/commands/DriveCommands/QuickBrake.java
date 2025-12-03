@@ -1,13 +1,13 @@
 package frc.robot.commands.DriveCommands;
 
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DriveTrain;
 
 public class QuickBrake extends Command {
   private final DriveTrain m_driveTrain;
-  private IdleMode mode;
+  private NeutralModeValue mode;
   /** Creates a new QuickBrake. */
   public QuickBrake(DriveTrain driveTrain) {
     m_driveTrain = driveTrain;
