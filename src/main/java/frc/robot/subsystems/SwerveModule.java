@@ -131,8 +131,9 @@ public class SwerveModule {
       (Math.abs(state.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01) || isNeutral) 
       ? lastAngle : state.angle;
 
-    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI)));
-    m_turningMotor.setControl(new PositionVoltage(angle.getDegrees()));
+    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI))
+                            .withSlot(0));
+    m_turningMotor.setControl(new PositionVoltage(angle.getDegrees()).withSlot(0));
     lastAngle = angle;
   }
 
