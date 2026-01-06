@@ -19,7 +19,7 @@ public class Factorial extends Term {
     /**
      * Calculate the factorial of a given integer
      * 
-     * @param k The interger to calculate the factorial of
+     * @param k The integer to calculate the factorial of
      * @return The calculated factorial
      */
     public static double factorial(int k) {

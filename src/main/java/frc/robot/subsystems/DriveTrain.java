@@ -2,19 +2,14 @@ package frc.robot.subsystems;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BooleanSupplier;
-import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
 import choreo.trajectory.SwerveSample;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -33,14 +28,10 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
+
 import frc.Lib.AdvancedPose2D;
 import frc.Lib.ElasticUtil;
 import frc.Lib.ElasticUtil.Notification;
@@ -48,11 +39,11 @@ import frc.Lib.ElasticUtil.Notification.NotificationLevel;
 import frc.Lib.LimelightHelpers;
 import frc.Lib.LimelightHelpers.PoseEstimate;
 import frc.Lib.TimedValue;
+
 import frc.robot.Constants.AutoAimConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IOConstants;
 import frc.robot.Constants.ModuleConstants;
-import frc.robot.Constants.RemyConstants;
 import frc.robot.Constants.SensorConstants;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Robot;
@@ -64,8 +55,7 @@ public class DriveTrain extends SubsystemBase {
   private final SwerveDrivePoseEstimator poseEstimator;
   private final Field2d estimateField;
 
-  // private final GenericEntry robotHeading, xSpeedSender, 
-  //                            ySpeedSender, omegaSender, matchTime, atDesPose, orientationSender;
+  private final GenericEntry robotHeading, xSpeedSender, ySpeedSender, omegaSender, matchTime, atDesPose, orientationSender;
 
   private final PIDController xController = new PIDController(AutoAimConstants.transkP,
                                                               AutoAimConstants.transkI,
@@ -103,7 +93,7 @@ public class DriveTrain extends SubsystemBase {
                                                      ModuleConstants.frontLeftTurningEncoderID, 
                                                      ModuleConstants.frontLeftDriveMotorReversed,
                                                      ModuleConstants.frontLeftTurningMotorReversed, 
-                                                     ModuleConstants.frontLeftAnalogEncoderOffset, 
+                                                     ModuleConstants.frontLeftAbsoluteEncoderOffset, 
                                                      ModuleConstants.frontLeftAbsReversed);
 
     m_frontRight = new SwerveModule("frontRight", ModuleConstants.frontRightDriveMotorID, 
@@ -111,7 +101,7 @@ public class DriveTrain extends SubsystemBase {
                                                        ModuleConstants.frontRightTurningEncoderID, 
                                                        ModuleConstants.frontRightDriveMotorReversed,
                                                        ModuleConstants.frontRightTurningMotorReversed, 
-                                                       ModuleConstants.frontRightAnalogEncoderOffset, 
+                                                       ModuleConstants.frontRightAbsoluteEncoderOffset, 
                                                        ModuleConstants.frontRightAbsReversed);
 
     m_backLeft = new SwerveModule("backLeft", ModuleConstants.backLeftDriveMotorID, 
@@ -119,7 +109,7 @@ public class DriveTrain extends SubsystemBase {
                                                    ModuleConstants.backLeftTurningEncoderID, 
                                                    ModuleConstants.backLeftDriveMotorReversed,
                                                    ModuleConstants.backLeftTurningMotorReversed, 
-                                                   ModuleConstants.backLeftAnalogEncoderOffset, 
+                                                   ModuleConstants.backLeftAbsoluteEncoderOffset, 
                                                    ModuleConstants.backLeftAbsReversed);
 
     m_backRight = new SwerveModule("backRight", ModuleConstants.backRightDriveMotorID, 
@@ -127,7 +117,7 @@ public class DriveTrain extends SubsystemBase {
                                                      ModuleConstants.backRightTurningEncoderID, 
                                                      ModuleConstants.backRightDriveMotorReversed,
                                                      ModuleConstants.backRightTurningMotorReversed, 
-                                                     ModuleConstants.backRightAnalogEncoderOffset, 
+                                                     ModuleConstants.backRightAbsoluteEncoderOffset, 
                                                      ModuleConstants.backRightAbsReversed);
 
     brakeAll();
@@ -149,35 +139,33 @@ public class DriveTrain extends SubsystemBase {
     setInitialPose(initialPose);
     estimateField.setRobotPose(initialPose);
 
-    /** AutoAim */
-
     /* DashBoard Initialization */
-    // robotHeading = IOConstants.TeleopTab.add("Robot Heading", heading)
-    //                                     .withWidget("Gyro")
-    //                                     .withProperties(Map.of("counter_clockwise_positive", true))
-    //                                     .getEntry();
-    // xSpeedSender = IOConstants.TeleopTab.add("xSpeed", 0)
-    //                                     .withWidget("Number Slider")
-    //                                     .withProperties(Map.of("min_value", -1, "max_value", 1))
-    //                                     .getEntry();
-    // ySpeedSender = IOConstants.TeleopTab.add("ySpeed", 0)
-    //                                     .withWidget("Number Slider")
-    //                                     .withProperties(Map.of("min_value", -1, "max_value", 1))
-    //                                     .getEntry();
-    // omegaSender = IOConstants.TeleopTab.add("rot", 0)
-    //                                    .withWidget("Number Slider")
-    //                                    .withProperties(Map.of("min_value", -1, "max_value", 1))
-    //                                    .getEntry();
-    // matchTime = IOConstants.TeleopTab.add("Match Time", 15)
-    //                                  .withWidget("Match Time")
-    //                                  .withProperties(Map.of("red_start_time", 10, "yellow_start_time", 20))
-    //                                  .getEntry();
-    // atDesPose = IOConstants.TeleopTab.add("At Desired Pose", false)
-    //                                  .withWidget("Boolean Box")
-    //                                  .getEntry();
-    // orientationSender = IOConstants.TeleopTab.add("Field Oriented?", true)
-    //                                          .withWidget("Boolean Box")
-    //                                          .getEntry();
+    robotHeading = IOConstants.TeleopTab.add("Robot Heading", heading)
+                                        .withWidget("Gyro")
+                                        .withProperties(Map.of("counter_clockwise_positive", true))
+                                        .getEntry();
+    xSpeedSender = IOConstants.TeleopTab.add("xSpeed", 0)
+                                        .withWidget("Number Slider")
+                                        .withProperties(Map.of("min_value", -1, "max_value", 1))
+                                        .getEntry();
+    ySpeedSender = IOConstants.TeleopTab.add("ySpeed", 0)
+                                        .withWidget("Number Slider")
+                                        .withProperties(Map.of("min_value", -1, "max_value", 1))
+                                        .getEntry();
+    omegaSender = IOConstants.TeleopTab.add("rot", 0)
+                                       .withWidget("Number Slider")
+                                       .withProperties(Map.of("min_value", -1, "max_value", 1))
+                                       .getEntry();
+    matchTime = IOConstants.TeleopTab.add("Match Time", 15)
+                                     .withWidget("Match Time")
+                                     .withProperties(Map.of("red_start_time", 10, "yellow_start_time", 20))
+                                     .getEntry();
+    atDesPose = IOConstants.TeleopTab.add("At Desired Pose", false)
+                                     .withWidget("Boolean Box")
+                                     .getEntry();
+    orientationSender = IOConstants.TeleopTab.add("Field Oriented?", true)
+                                             .withWidget("Boolean Box")
+                                             .getEntry();
     SmartDashboard.putData("Field Position", estimateField);
 
     //SwerveDrive Widget
@@ -229,25 +217,6 @@ public class DriveTrain extends SubsystemBase {
 
     lastAccel = new TimedValue(0, 0);
 
-    //Remy Test
-    // Pathplanner
-    try {
-      RemyConstants.config = RobotConfig.fromGUISettings();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    // AutoBuilder.configure( this :: getPose, this :: resetOdometry , this :: getChassisSpeeds, (speeds) -> chassisSpeedDrive(speeds),
-    //                        new PPHolonomicDriveController(new PIDConstants(1.5, .013, 0), new PIDConstants(4.5, .355, 0)),
-    //                         RemyConstants.config, () -> {
-    //                           var alliance = DriverStation.getAlliance();
-    //                           if (alliance.isPresent()) {
-    //                             return alliance.get() == DriverStation.Alliance.Red;
-    //                           }
-    //                             return false;
-    //                           }, 
-    //                           this);
-    // choreo
     headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
@@ -255,9 +224,9 @@ public class DriveTrain extends SubsystemBase {
   public void periodic() {
     if (periodicTimer >= 9) {
       m_frontLeft.update();
-      // m_frontRight.update();
-      // m_backLeft.update();
-      // m_backRight.update();
+      m_frontRight.update();
+      m_backLeft.update();
+      m_backRight.update();
 
       periodicTimer = 0;
     }
@@ -273,13 +242,12 @@ public class DriveTrain extends SubsystemBase {
 
     // Field Displaying
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
-    // estimateField.getObject("heading").setPose(FieldConstants.fieldLength / 2, FieldConstants.fieldWidth / 2, getHeading());
 
     /** Dashboard Posting */
-    // robotHeading.setDouble(getHeading().getDegrees());
-    // atDesPose.setBoolean(atSetpoints());
-    // matchTime.setDouble(DriverStation.getMatchTime());
-    // orientationSender.setBoolean(fieldOrientation);
+    robotHeading.setDouble(getHeading().getDegrees());
+    atDesPose.setBoolean(atSetpoints());
+    matchTime.setDouble(DriverStation.getMatchTime());
+    orientationSender.setBoolean(fieldOrientation);
 
     // Tell if gyro disconnects
     if (!m_gyro.isConnected() && !notified) {
@@ -304,13 +272,13 @@ public class DriveTrain extends SubsystemBase {
     
     // Update random stuff
     isBrake = m_frontLeft.getNeutralMode() == NeutralModeValue.Brake;
-
     isBlue = m_alliance == Alliance.Blue;
 
     // Drive Robot
     rawDrive(x , y, omega);
 
-    if (!crash && crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
+    //Crash detection
+    if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
       poseEstimator.setVisionMeasurementStdDevs(AutoAimConstants.poseEstimateCrashVisionStdDev);
       crash = true;
       hasCrashed = true;
@@ -349,21 +317,9 @@ public class DriveTrain extends SubsystemBase {
 
     setModuleStates(swerveModuleStates, (xSpeed == 0 && ySpeed == 0 && omega == 0));
 
-    // xSpeedSender.setDouble(xSpeed);
-    // ySpeedSender.setDouble(ySpeed);
-    // omegaSender.setDouble(-omega);
-  }
-
-
-  /**
-   * Drive the robot back and forth
-   * 
-   * @param xSpeed The speed at which to drive
-   */
-  public void straightDrive(double xSpeed) {
-    x = xSpeed * (straightDriveBackwards ? -1 : 1) * (isBlue ? 1 : -1);
-    y = 0;
-    omega = 0;
+    xSpeedSender.setDouble(xSpeed);
+    ySpeedSender.setDouble(ySpeed);
+    omegaSender.setDouble(-omega);
   }
 
   /**
@@ -482,18 +438,6 @@ public class DriveTrain extends SubsystemBase {
   public SwerveModulePosition[] getSwerveModulePositions() {
     return new SwerveModulePosition[] {m_frontLeft.getPosition(), m_frontRight.getPosition(),
                                        m_backLeft.getPosition(), m_backRight.getPosition()};
-  }
-
-  /**
-   * Sets the positions of the SwerveModules' angle motors.
-   *  
-   * @param desiredStates The state containing the desired angle for the angle motor;
-   */
-  public void setModuleAngles(SwerveModuleState[] desiredStates) {
-    m_frontLeft.setAngle(desiredStates[0], false);
-    m_frontRight.setAngle(desiredStates[1], false);
-    m_backLeft.setAngle(desiredStates[2], false);
-    m_backRight.setAngle(desiredStates[3], false);
   }
 
   /** Sets the pose of the robot to be locked: all modules' angles form an X */
@@ -746,15 +690,6 @@ public class DriveTrain extends SubsystemBase {
     }
   }
 
-  public Command drive() {
-    Trigger end = new Trigger(() -> {return false;});
-    return new RunCommand(() -> {this.teleopDrive(x, y, omega);}, this).until(end);
-  }
-
-  public void SETODOM(Pose2d pose) {
-    poseEstimator.resetPose(pose);
-  }
-
   //remy Test
   public void resetOdometry (Pose2d pose) {
     resetEncoders();
@@ -762,28 +697,13 @@ public class DriveTrain extends SubsystemBase {
   }
 
   // choreo
-  public void followTrajectory(SwerveSample sample) {
-    Pose2d pose = getPose();
+  // public void followTrajectory(SwerveSample sample) {
+  //   Pose2d pose = getPose();
 
-    ChassisSpeeds speeds = new ChassisSpeeds( 
-      sample.vx + xController.calculate(pose.getX(), sample.x), 
-      sample.vy + yController.calculate(pose.getY(), sample.y),
-      sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
-      chassisSpeedDrive(speeds);
-  }
-
-  //TESTING
-  public static final class DriveCommands {
-    public static Command TDRIVETEST(
-      DriveTrain drive,
-      DoubleSupplier xSupplier,
-      DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier) {
-    return Commands.run(
-        () -> {
-          drive.teleopDrive(xSupplier.getAsDouble(), ySupplier.getAsDouble(), omegaSupplier.getAsDouble());
-        },
-        drive);
-    }
-  }
+  //   ChassisSpeeds speeds = new ChassisSpeeds( 
+  //     sample.vx + xController.calculate(pose.getX(), sample.x), 
+  //     sample.vy + yController.calculate(pose.getY(), sample.y),
+  //     sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
+  //     chassisSpeedDrive(speeds);
+  // }
 }

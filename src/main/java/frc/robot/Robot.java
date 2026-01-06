@@ -1,6 +1,5 @@
 package frc.robot;
 
-import choreo.auto.AutoFactory;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -12,10 +11,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants.IOConstants;
-import frc.robot.subsystems.DriveTrain;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -30,8 +26,6 @@ public class Robot extends TimedRobot {
   private static final Timer robotTimer = new Timer();
   private static Alliance m_alliance = Alliance.Blue;
   //Remy Test
-  private final DriveTrain m_DriveTrain = new DriveTrain();
-  //private final AutoFactory autoFactory;
 
 
   public Robot() {
@@ -43,13 +37,6 @@ public class Robot extends TimedRobot {
     voltage = IOConstants.TeleopTab.add("Battery Voltage", RobotController.getBatteryVoltage())
                                    .withWidget("Voltage View")
                                    .getEntry();
-
-    // RobotModeTriggers.autonomous().onTrue(m_robotContainer.TEST().cmd());
-    // m_robotContainer.TEST().active().onTrue(Commands.runOnce(() -> {IOConstants.AutonTab.addBoolean("ACTIVE", () -> {return true;});}));
-
-    //Remy Test Choreo Stuff
-    // autoFactory = new AutoFactory(m_DriveTrain :: getPose, m_DriveTrain :: resetOdometry,
-    //                               m_DriveTrain :: followTrajectory, true, m_DriveTrain);
   }
   
   /**
