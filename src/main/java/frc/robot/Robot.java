@@ -31,7 +31,7 @@ public class Robot extends TimedRobot {
   private static Alliance m_alliance = Alliance.Blue;
   //Remy Test
   private final DriveTrain m_DriveTrain = new DriveTrain();
-  private final AutoFactory autoFactory;
+  //private final AutoFactory autoFactory;
 
 
   public Robot() {
@@ -44,12 +44,12 @@ public class Robot extends TimedRobot {
                                    .withWidget("Voltage View")
                                    .getEntry();
 
-    RobotModeTriggers.autonomous().onTrue(m_robotContainer.TEST().cmd());
-    m_robotContainer.TEST().active().onTrue(Commands.runOnce(() -> {IOConstants.AutonTab.addBoolean("ACTIVE", () -> {return true;});}));
+    // RobotModeTriggers.autonomous().onTrue(m_robotContainer.TEST().cmd());
+    // m_robotContainer.TEST().active().onTrue(Commands.runOnce(() -> {IOConstants.AutonTab.addBoolean("ACTIVE", () -> {return true;});}));
 
     //Remy Test Choreo Stuff
-    autoFactory = new AutoFactory(m_DriveTrain :: getPose, m_DriveTrain :: resetOdometry,
-                                  m_DriveTrain :: followTrajectory, true, m_DriveTrain);
+    // autoFactory = new AutoFactory(m_DriveTrain :: getPose, m_DriveTrain :: resetOdometry,
+    //                               m_DriveTrain :: followTrajectory, true, m_DriveTrain);
   }
   
   /**

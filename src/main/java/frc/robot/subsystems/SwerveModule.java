@@ -42,7 +42,8 @@ public class SwerveModule {
 
   private SwerveModuleState m_desiredState;
 
-  private final GenericEntry desiredStateSender, wheelAngle;
+  private final GenericEntry //desiredStateSender, 
+  TESTwheelAngle;
 
   /**
    * Constructs a SwerveModule.
@@ -73,8 +74,8 @@ public class SwerveModule {
     driveInverted = driveMotorReversed;
     turnReversed = turningMotorReversed;
     
-    configAngleMotorDefault();
-    configDriveMotorDefault();
+    //configAngleMotorDefault();
+    //configDriveMotorDefault();
     configAbsoluteEncoderDefault();
     
     /** PIDController */
@@ -92,11 +93,11 @@ public class SwerveModule {
     AnalogEncoderOffset = encoderOffset;
     absReversed = absoluteEncoderReversed;
 
-    resetEncoders();
+    //resetEncoders();
 
     /** DashBoard Initialization */
-    wheelAngle = IOConstants.DiagnosticTab.add(m_name + "'s angle", getAbsoluteEncoder()).getEntry();
-    desiredStateSender = IOConstants.DiagnosticTab.add(m_name + "'s desired state", getState().toString()).getEntry();
+    TESTwheelAngle = IOConstants.DiagnosticTab.add(m_name + "'s angle TEST", getAbsoluteEncoder()).getEntry();
+    // desiredStateSender = IOConstants.DiagnosticTab.add(m_name + "'s desired state", getState().toString()).getEntry();
 
     // LastAngle
     lastAngle = getState().angle;
@@ -132,7 +133,7 @@ public class SwerveModule {
     m_driveMotor.set(filter.calculate(driveOutput));
     setAngle(state, isNeutral);
 
-    desiredStateSender.setString(desiredState.toString());
+    //desiredStateSender.setString(desiredState.toString());
   }
 
   /**
@@ -188,7 +189,8 @@ public class SwerveModule {
 
   /** Posts module values to ShuffleBoard. */
   public void update() {
-    wheelAngle.setDouble(getAbsoluteEncoder());
+    TESTwheelAngle.setDouble(getAbsoluteEncoder());
+    //System.out.println(getAbsoluteEncoder());
   }
 
   public SwerveModuleState getDesiredState() {

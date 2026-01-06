@@ -41,12 +41,12 @@ public class RobotContainer {
   
   /** SUBSYSTEMS */
   private final DriveTrain m_driveTrain = new DriveTrain();
-  private final AutoFactory factory = new AutoFactory(m_driveTrain::getPose,
-                                                      m_driveTrain::SETODOM,
-                                                      m_driveTrain::choreoDrive, 
-                                                      false, 
-                                                      m_driveTrain);
-  private final SubsystemManager m_subsystemManager = new SubsystemManager(factory, m_driveTrain);
+  //  final AutoFactory factory = new AutoFactory(m_driveTrain::getPose,
+  //                                                     m_driveTrain::SETODOM,
+  //                                                     m_driveTrain::choreoDrive, 
+  //                                                     false, 
+  //                                                     m_driveTrain);
+  // private final SubsystemManager m_subsystemManager = new SubsystemManager(factory, m_driveTrain);
 
   /** Auton Chooser */
   private final SendableChooser<Command> autonChooser = new SendableChooser<Command>();
@@ -114,7 +114,7 @@ public class RobotContainer {
   }
 
   public AutoRoutine TEST() {
-    return m_subsystemManager.TEST();
+    return null; //m_subsystemManager.TEST();
   }
 
   /**

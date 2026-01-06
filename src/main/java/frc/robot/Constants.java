@@ -2,6 +2,7 @@ package frc.robot;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.config.RobotConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
@@ -85,6 +86,7 @@ public final class Constants {
   public static final class ModuleConstants {
     public static final double moduleDriveSlewRate = 2;
 
+<<<<<<< HEAD
     public static final int frontLeftDriveMotorPort = 1;
     public static final int frontRightDriveMotorPort = 3;
     public static final int backLeftDriveMotorPort = 5;
@@ -99,6 +101,22 @@ public final class Constants {
     public static final int frontRightTurningEncoderPort = 1;
     public static final int backLeftTurningEncoderPort = 2;
     public static final int backRightTurningEncoderPort = 3;
+=======
+    public static final int frontLeftDriveMotorID = 1;
+    public static final int frontRightDriveMotorID = 3;
+    public static final int backLeftDriveMotorID = 7;
+    public static final int backRightDriveMotorID = 5;
+
+    public static final int frontLeftTurningMotorID = 2;
+    public static final int frontRightTurningMotorID = 4;
+    public static final int backLeftTurningMotorID = 8;
+    public static final int backRightTurningMotorID = 6;
+    
+    public static final int frontLeftTurningEncoderID = 9;
+    public static final int frontRightTurningEncoderID = 10;
+    public static final int backLeftTurningEncoderID = 12;
+    public static final int backRightTurningEncoderID = 11;
+>>>>>>> 939c1d5e510830c60668c3c41dbb0132ef3d9d4e
 
     public static final boolean frontLeftTurningMotorReversed = false;    
     public static final boolean frontRightTurningMotorReversed = false;
@@ -115,10 +133,10 @@ public final class Constants {
     public static final boolean backLeftAbsReversed = false;
     public static final boolean backRightAbsReversed = false;
 
-    public static final double frontLeftAnalogEncoderOffset = 4.69;  
-    public static final double frontRightAnalogEncoderOffset = 75.88;
-    public static final double backLeftAnalogEncoderOffset = 162.39;
-    public static final double backRightAnalogEncoderOffset = 63.79;
+    public static final double frontLeftAnalogEncoderOffset = 0;  
+    public static final double frontRightAnalogEncoderOffset = 0;
+    public static final double backLeftAnalogEncoderOffset = 0;
+    public static final double backRightAnalogEncoderOffset = 0;
 
     public static final double maxModuleSpeedMetersPerSecond = 4.5;
     public static final double maxModuleAccelerationMetersPerSecondSquared = 4;
@@ -126,13 +144,13 @@ public final class Constants {
     public static final double maxModuleAngularAccelerationDegreesPerSecondSquared = 360;
 
     public static final double encoderCPR = 1;
-    public static final double wheelDiameterMeters = Units.inchesToMeters(3.8125);
-    public static final double driveGearRatio = 1 / 6.75;
+    public static final double wheelDiameterMeters = Units.inchesToMeters(4);
+    public static final double driveGearRatio = 1 / 5.68;
     public static final double driveMotorConversionFactor = 
       // Assumes the encoders are directly mounted on the wheel shafts
       (wheelDiameterMeters * Math.PI) / (double) encoderCPR * driveGearRatio;
 
-    public static final double angleGearRatio = (150/7);
+    public static final double angleGearRatio = 12.1;
     public static final double angleConversionFactor = 360.0 / angleGearRatio;
 
     public static final double voltageComp = 12.0;
@@ -182,5 +200,6 @@ public final class Constants {
 
   public class RemyConstants {
     public static RobotConfig config;
+    
   }
 }
