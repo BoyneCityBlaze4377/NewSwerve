@@ -87,18 +87,18 @@ public final class Constants {
 
     public static final int frontLeftDriveMotorPort = 1;
     public static final int frontRightDriveMotorPort = 3;
-    public static final int backLeftDriveMotorPort = 7;
-    public static final int backRightDriveMotorPort = 5;
+    public static final int backLeftDriveMotorPort = 5;
+    public static final int backRightDriveMotorPort = 7;
 
     public static final int frontLeftTurningMotorPort = 2;
     public static final int frontRightTurningMotorPort = 4;
-    public static final int backLeftTurningMotorPort = 8;
-    public static final int backRightTurningMotorPort = 6;
+    public static final int backLeftTurningMotorPort = 6;
+    public static final int backRightTurningMotorPort = 8;
     
     public static final int frontLeftTurningEncoderPort = 0;
     public static final int frontRightTurningEncoderPort = 1;
-    public static final int backLeftTurningEncoderPort = 3;
-    public static final int backRightTurningEncoderPort = 2;
+    public static final int backLeftTurningEncoderPort = 2;
+    public static final int backRightTurningEncoderPort = 3;
 
     public static final boolean frontLeftTurningMotorReversed = false;    
     public static final boolean frontRightTurningMotorReversed = false;
@@ -148,9 +148,11 @@ public final class Constants {
     public static final double kMaxOutput = 0.95;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
+
+    public static final double absoluteEncoderRange = .5; // [-.5,.5)
   }
 
-  public class FieldConstants {
+  public static final class FieldConstants {
     public static final double fieldLength = 17.548;
     public static final double fieldWidth = 8.052;
   }

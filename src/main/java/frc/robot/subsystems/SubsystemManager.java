@@ -11,10 +11,21 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 public class SubsystemManager {
     private final DriveTrain m_driveTrain;
     private final AutoFactory m_factory;
+    private final DriveTrain m_TEST;
 
     public SubsystemManager(AutoFactory factory, DriveTrain driveTrain) {
         m_driveTrain = driveTrain;
         m_factory = factory;
+        m_TEST = new DriveTrain();
+    }
+
+    public Command testSubsytemInterop() {
+        return Commands.run(() -> {
+            m_driveTrain.PIDDrive();
+            m_TEST.atSetpoints();
+            if (m_TEST.atSetpoints() && m_driveTrain.isFieldOriented()) m_TEST.brakeAll();
+        }, 
+        m_driveTrain, m_TEST);
     }
 
     public AutoRoutine example() {

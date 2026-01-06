@@ -1,10 +1,12 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -26,8 +28,9 @@ public class SwerveModule {
   private final TalonFX m_driveMotor, m_turningMotor;
 
   private final TalonFXConfiguration m_driveConfig, m_turnConfig;
+  private final CANcoderConfiguration m_absEncoderConfig;
 
-  private final CANcoder absoluteEncoder;
+  private final CANcoder m_absoluteEncoder;
 
   private double AnalogEncoderOffset, turningFactor;
   private final boolean driveInverted, turnReversed, absReversed;
@@ -65,12 +68,14 @@ public class SwerveModule {
 
     m_driveConfig = new TalonFXConfiguration();
     m_turnConfig = new TalonFXConfiguration();
+    m_absEncoderConfig = new CANcoderConfiguration();
     
     driveInverted = driveMotorReversed;
     turnReversed = turningMotorReversed;
     
     configAngleMotorDefault();
     configDriveMotorDefault();
+    configAbsoluteEncoderDefault();
     
     /** PIDController */
     turningController = new ProfiledPIDController(ModuleConstants.angleKP, 
@@ -83,7 +88,7 @@ public class SwerveModule {
     filter = new SlewRateLimiter(2);
 
     /** Absolute Encoder */
-    absoluteEncoder = new CANcoder(turningEncoderChannel);
+    m_absoluteEncoder = new CANcoder(turningEncoderChannel);
     AnalogEncoderOffset = encoderOffset;
     absReversed = absoluteEncoderReversed;
 
@@ -165,17 +170,17 @@ public class SwerveModule {
 
   /** Stops the module's drive motor from moving. */
   public void stop() {
-    m_driveMotor.set(0);
+    m_driveMotor.stopMotor();
   }
 
   /** Stops the module's angle motor from moving. */
   public void stopTurn() {
-    m_turningMotor.set(0);
+    m_turningMotor.stopMotor();
   }
 
   /** @return The angle, in degrees, of the module. */
   public double getAbsoluteEncoder() {
-    double angle = absoluteEncoder.getPosition().getValueAsDouble() / 360;
+    double angle = m_absoluteEncoder.getPosition().getValueAsDouble() * 360;
     angle -= AnalogEncoderOffset;
     angle = MathUtil.inputModulus(angle, -180, 180);
     return (absReversed ? -1 : 1) * angle;
@@ -207,14 +212,19 @@ public class SwerveModule {
     configDriveMotor();
   }
 
-  /** Sets the SparkMaxConfig of the turning motor to m_turnConfig */
+  /** Sets the configuration of the turning motor to m_turnConfig */
   public void configAngleMotor() {
     m_turningMotor.getConfigurator().apply(m_turnConfig);
   }
 
-  /** Sets the SparkMaxConfig of the drive motor to m_driveConfig */
+  /** Sets the configuration of the drive motor to m_driveConfig */
   public void configDriveMotor() {
-    m_driveMotor.getConfigurator().apply(m_turnConfig);
+    m_driveMotor.getConfigurator().apply(m_driveConfig);
+  }
+
+  /** Sets the configuration of the absolute encoder to m_absEncoderConfig */
+  public void configAbsoluteEncoder() {
+    m_absoluteEncoder.getConfigurator().apply(m_absEncoderConfig);
   }
 
   /** Sets the default configuration of the angle motor. */
@@ -240,6 +250,14 @@ public class SwerveModule {
 
     Timer.delay(1);
     configDriveMotor();
+  }
+  /** Sets the default configuration of the absolute encoder. */
+  private void configAbsoluteEncoderDefault() {
+    m_absEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = ModuleConstants.absoluteEncoderRange;
+    m_absEncoderConfig.MagnetSensor.SensorDirection = SensorDirectionValue.CounterClockwise_Positive;
+
+    Timer.delay(1);
+    configAbsoluteEncoder();
   }
 
   /** 

@@ -2,6 +2,8 @@ package frc.robot.subsystems;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -31,9 +33,11 @@ import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -385,7 +389,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    * @param scale Whether to use Height Speed Scalers
    */
-  public void autonDrive(double xSpeed, double ySpeed, double rot, boolean scale) {
+  public void autonDrive(double xSpeed, double ySpeed, double rot) {
     brakeAll();
     x = xSpeed;
     y = ySpeed;
@@ -756,6 +760,7 @@ public class DriveTrain extends SubsystemBase {
     resetEncoders();
     m_gyro.reset();
   }
+
   // choreo
   public void followTrajectory(SwerveSample sample) {
     Pose2d pose = getPose();
@@ -765,5 +770,20 @@ public class DriveTrain extends SubsystemBase {
       sample.vy + yController.calculate(pose.getY(), sample.y),
       sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
       chassisSpeedDrive(speeds);
+  }
+
+  //TESTING
+  public static final class DriveCommands {
+    public static Command TDRIVETEST(
+      DriveTrain drive,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      DoubleSupplier omegaSupplier) {
+    return Commands.run(
+        () -> {
+          drive.teleopDrive(xSupplier.getAsDouble(), ySupplier.getAsDouble(), omegaSupplier.getAsDouble());
+        },
+        drive);
+    }
   }
 }

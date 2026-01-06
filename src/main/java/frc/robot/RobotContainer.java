@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.IOConstants;
 import frc.robot.commands.Auton.NoAuton;
 import frc.robot.commands.DriveCommands.ForceRobotOrientation;
@@ -62,6 +63,10 @@ public class RobotContainer {
   private final Command StraightDrive = new StraightDrive(m_driveTrain, m_driverStick);
   private final Command RobotOrient = new ForceRobotOrientation(m_driveTrain);
 
+  private final Command tTESTDRIVECommand = DriveTrain.DriveCommands.TDRIVETEST(m_driveTrain, () -> Math.abs(m_driverStick.getY()) < DriveConstants.translationalDeadband ? 0 : -m_driverStick.getY(),
+                                                                                  () -> Math.abs(m_driverStick.getX()) < DriveConstants.translationalDeadband ? 0 : m_driverStick.getX(), 
+                                                                                  () -> Math.abs(m_driverStick.getZ()) < DriveConstants.rotationalDeadband ? 0 : m_driverStick.getZ());
+
   /** AUTONS */
   private final NoAuton NoAuton = new NoAuton();
   //Testing
@@ -69,6 +74,7 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     m_driveTrain.setDefaultCommand(TeleopDrive);
+    // m_driveTrain.setDefaultCommand(tTESTDRIVECommand);
     configureButtonBindings();
 
     configAutonChooser();
