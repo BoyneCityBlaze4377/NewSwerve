@@ -61,9 +61,9 @@ public final class Constants {
   public static final class DriveConstants {
     public static final double speedScaler = 1;
 
-    public static final double maxSpeedMetersPerSecond = 4.25; //4.5 true max
+    public static final double maxSpeedMetersPerSecond = 5;
     public static final double maxAccelerationMetersPerSecondSquared = 4;
-    public static final double maxRotationSpeedRadiansPerSecond = Math.PI * .8;
+    public static final double maxRotationSpeedRadiansPerSecond = Math.PI;
     public static final double maxRotationAccelerationRadiansPerSecondSquared = 2 * maxRotationSpeedRadiansPerSecond;
 
     public static final double translationalDeadband = .1;
@@ -72,17 +72,12 @@ public final class Constants {
     public static final double jerkCrashTheshold = maxAccelerationMetersPerSecondSquared * Math.sqrt(2);
     public static final double crashDebounceTime = .1;
 
-    public static final double ksVolts = 5;
-    public static final double kvVoltSecondsPerMeter = 4;
-    public static final double kaVoltSecondsSquaredPerMeter = 1;
-
     public static final boolean gyroReversed = false;
   }
 
   /* Constants to create and configure SwerveModules */
   public static final class ModuleConstants {
-    public static final double moduleDriveSlewRate = 2;
-
+    /** CAN ID's */
     public static final int frontLeftDriveMotorID = 1;
     public static final int frontRightDriveMotorID = 3;
     public static final int backLeftDriveMotorID = 7;
@@ -98,6 +93,7 @@ public final class Constants {
     public static final int backLeftTurningEncoderID = 12;
     public static final int backRightTurningEncoderID = 11;
 
+    /** Inversions */
     public static final boolean frontLeftTurningMotorReversed = false;    
     public static final boolean frontRightTurningMotorReversed = false;
     public static final boolean backLeftTurningMotorReversed = false;
@@ -113,46 +109,47 @@ public final class Constants {
     public static final boolean backLeftAbsReversed = false;
     public static final boolean backRightAbsReversed = false;
 
+    /** Offsets */
     public static final double frontLeftAbsoluteEncoderOffset = 0;  
     public static final double frontRightAbsoluteEncoderOffset = 0;
     public static final double backLeftAbsoluteEncoderOffset = 0;
     public static final double backRightAbsoluteEncoderOffset = 0;
 
-    public static final double maxModuleSpeedMetersPerSecond = 4.5;
-    public static final double maxModuleAccelerationMetersPerSecondSquared = 4;
-    public static final double maxModuleAngularSpeedDegreesPerSecond = 360;
-    public static final double maxModuleAngularAccelerationDegreesPerSecondSquared = 360;
+    /** Full Module */
+    public static final double maxModuleSpeedMetersPerSecond = 5; //5.614416 True max
+    public static final double maxModuleAccelerationMetersPerSecondSquared = 7;
+    public static final double maxModuleAngularSpeedDegreesPerSecond = 360 * 3;
+    public static final double maxModuleAngularAccelerationDegreesPerSecondSquared = maxModuleAngularSpeedDegreesPerSecond * 3;
 
-    public static final double encoderCPR = 1;
-    public static final double wheelDiameterMeters = Units.inchesToMeters(4);
-    public static final double driveGearRatio = 5.68;
-    public static final double driveMotorConversionFactor = 
-      // Assumes the encoders are directly mounted on the wheel shafts
-      (wheelDiameterMeters * Math.PI) / encoderCPR * driveGearRatio;
-
-      public static final double driveKP = 0.07; //.01
-      public static final double driveKI = 0.0;
-      public static final double driveKD = 0.0;
-      public static final double driveKTolerance = .5;
-
-    public static final double angleGearRatio = 12.1;
-    public static final double angleConversionFactor = 360.0 / angleGearRatio;
-
+    public static final double kMaxOutput = 0.95;
     public static final double maxVoltage = 14.0;
     public static final int angleContinuousCurrentLimit = 20;
+
+    public static final double absoluteEncoderRange = .5; // [-.5, .5)
+
+    /** Drive Motor */
+    public static final double wheelDiameterMeters = Units.inchesToMeters(4);
+    public static final double driveGearRatio = 5.68;
+    public static final double driveMotorConversionFactor = (wheelDiameterMeters * Math.PI) / driveGearRatio;
+
+    public static final double driveKP = 0.07; //.01
+    public static final double driveKI = 0.0;
+    public static final double driveKD = 0.0;
+    public static final double driveKTolerance = .5;
+
+    public static final NeutralModeValue initialDriveNeutralMode  = NeutralModeValue.Brake;
+
+    /** Turning motor */
+    public static final double angleGearRatio = 12.1;
+    public static final double angleConversionFactor = 360.0 / angleGearRatio;
   
     public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
     public static final double angleKP = 0.3; //.01
     public static final double angleKI = 0.0;
     public static final double angleKD = 0.0;
     public static final double angleKTolerance = .5;
-
-    public static final double kMaxOutput = 0.95;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
-    public static final NeutralModeValue initialDriveNeutralMode  = NeutralModeValue.Brake;
-
-    public static final double absoluteEncoderRange = .5; // [-.5,.5)
   }
 
   public static final class FieldConstants {

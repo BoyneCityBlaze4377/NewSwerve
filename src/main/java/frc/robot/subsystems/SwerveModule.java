@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MusicTone;
 import com.ctre.phoenix6.controls.PositionVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -34,7 +35,7 @@ public class SwerveModule {
 
   private final CANcoder m_absoluteEncoder;
 
-  private double absoluteEncoderOffset, turningFactor;
+  private double absoluteEncoderOffset;
   private final boolean driveInverted, turnReversed, absReversed;
 
   private Rotation2d lastAngle;
@@ -87,6 +88,7 @@ public class SwerveModule {
     absoluteEncoderOffset = encoderOffset;
     absReversed = absoluteEncoderReversed;
 
+    /** Configs */
     configAngleMotorDefault();
     configDriveMotorDefault();
     configAbsoluteEncoderDefault();
@@ -102,26 +104,11 @@ public class SwerveModule {
     lastAngle = getState().angle;
   }
 
-  /** @return The angle, in degrees, of the module */
-  private Rotation2d getAngle() {
-    return Rotation2d.fromDegrees(getAbsoluteEncoder());
-  }
-
-  /** @return The current state of the module. */
-  public SwerveModuleState getState() {
-    return new SwerveModuleState(m_driveMotor.getVelocity().getValueAsDouble(), getAngle());
-  }
-
-  /** @return The current position of the module. */
-  public SwerveModulePosition getPosition() {
-    return new SwerveModulePosition(m_driveMotor.getPosition().getValueAsDouble(), 
-                                    new Rotation2d(Units.degreesToRadians(getAbsoluteEncoder())));
-  }
-
   /**
    * Sets the desired state for the module.
    *
-   * @param desiredState Desired state with speed and angle.
+   * @param desiredState Desired state with velocity and angle.
+   * @param isNeutral Whether or not the intended driver input is (0,0,0).
    */
   public void setDesiredState(SwerveModuleState desiredState, boolean isNeutral) {
     SwerveModuleState state = desiredState;
@@ -139,29 +126,20 @@ public class SwerveModule {
     desiredStateSender.setString(desiredState.toString());
   }
 
-  /** Resets all of the SwerveModule's encoders. */
-  public void resetEncoders() {
-    m_driveMotor.setPosition(0);
-  }
+  /** 
+   * Sets the state of the module, ONLY USE FOR LOCKED MODE.
+   * 
+   * @param lockedState The state with which to lock the module.
+   */
+  public void setLockedState(SwerveModuleState lockedState) {
+    SwerveModuleState state = lockedState;
+    state.optimize(lastAngle);
 
-  /** @return The drive motor of the module. */
-  public TalonFX getDriveMotor() {
-    return m_driveMotor;
-  }
+    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond).withSlot(0));
+    m_turningMotor.setControl(new PositionVoltage(state.angle.getDegrees()).withSlot(0));
+    lastAngle = state.angle;
 
-  /** @return The turn motor of the module. */
-  public TalonFX getTurnMotor() {
-    return m_turningMotor;
-  }
-
-  /** Stops the module's drive motor from moving. */
-  public void stop() {
-    m_driveMotor.stopMotor();
-  }
-
-  /** Stops the module's angle motor from moving. */
-  public void stopTurn() {
-    m_turningMotor.stopMotor();
+    desiredStateSender.setString(lockedState.toString());
   }
 
   /** @return The angle, in degrees, of the module. */
@@ -172,47 +150,6 @@ public class SwerveModule {
     return (absReversed ? -1 : 1) * angle;
   }
 
-  /** Posts module values to ShuffleBoard. */
-  public void update() {
-    wheelAngle.setDouble(getAbsoluteEncoder());
-    currentStateSender.setString(getState().toString());
-  }
-
-  public SwerveModuleState getDesiredState() {
-    return m_desiredState;
-  }
-
-  /** @return The distance the drive motor has moved. */
-  public double getDistance() {
-    return m_driveMotor.getPosition().getValueAsDouble();
-  }
-
-  /** Sets the module's drive motor's idle mode to brake. */
-  public void brake() {
-    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    configDriveMotor();
-  }
-
-  /** Sets the module's drive motor's idle mode to coast. */
-  public void coast() {
-    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    configDriveMotor();
-  }
-
-  /** Sets the configuration of the turning motor to m_turnConfig */
-  public void configAngleMotor() {
-    m_turningMotor.getConfigurator().apply(m_turnConfig);
-  }
-
-  /** Sets the configuration of the drive motor to m_driveConfig */
-  public void configDriveMotor() {
-    m_driveMotor.getConfigurator().apply(m_driveConfig);
-  }
-
-  /** Sets the configuration of the absolute encoder to m_absEncoderConfig */
-  public void configAbsoluteEncoder() {
-    m_absoluteEncoder.getConfigurator().apply(m_absEncoderConfig);
-  }
 
   /** Sets the default configuration of the angle motor. */
   private void configAngleMotorDefault() {
@@ -220,7 +157,7 @@ public class SwerveModule {
 
     m_turnConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
     m_turnConfig.Feedback.SensorToMechanismRatio = 1;
-    m_turnConfig.Feedback.RotorToSensorRatio = ModuleConstants.angleGearRatio;
+    m_turnConfig.Feedback.RotorToSensorRatio = ModuleConstants.angleConversionFactor; //ModuleConstants.angleGearRatio
     m_turnConfig.Feedback.FeedbackRemoteSensorID = m_absoluteEncoder.getDeviceID();
 
     m_turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
@@ -244,7 +181,7 @@ public class SwerveModule {
     m_driveConfig.Audio.BeepOnBoot = false;
 
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-    m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveGearRatio;
+    m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio
 
     m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
@@ -261,7 +198,7 @@ public class SwerveModule {
     Timer.delay(1);
     configDriveMotor();
   }
-  
+
   /** Sets the default configuration of the absolute encoder. */
   private void configAbsoluteEncoderDefault() {
     m_absEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = ModuleConstants.absoluteEncoderRange;
@@ -271,26 +208,36 @@ public class SwerveModule {
     configAbsoluteEncoder();
   }
 
-  /** 
-   * Sets the state of the module, ONLY USE FOR LOCKED MODE.
-   * 
-   * @param lockedState The state with which to lock the module 
-   */
-  public void setLockedState(SwerveModuleState lockedState) {
-    SwerveModuleState state = lockedState;
-    state.optimize(lastAngle);
-
-    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI))
-                            .withSlot(0));
-    m_turningMotor.setControl(new PositionVoltage(state.angle.getDegrees()).withSlot(0));
-    lastAngle = state.angle;
-
-    desiredStateSender.setString(lockedState.toString());
+  /** Applies the configuration of the turning motor to m_turnConfig */
+  public void configAngleMotor() {
+    m_turningMotor.getConfigurator().apply(m_turnConfig);
   }
 
-  /** @return The current NeutralMode of the Module. */
-  public NeutralModeValue getNeutralMode() {
-    return m_driveConfig.MotorOutput.NeutralMode;
+  /** Applies the configuration of the drive motor to m_driveConfig */
+  public void configDriveMotor() {
+    m_driveMotor.getConfigurator().apply(m_driveConfig);
+  }
+
+  /** Applies the configuration of the absolute encoder to m_absEncoderConfig */
+  public void configAbsoluteEncoder() {
+    m_absoluteEncoder.getConfigurator().apply(m_absEncoderConfig);
+  }
+
+  /** Resets the {@link SwerveModule}'s drive encoder. */
+  public void resetEncoders() {
+    m_driveMotor.setPosition(0);
+  }
+
+  /** Sets the module's drive motor's idle mode to brake. */
+  public void brake() {
+    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    configDriveMotor();
+  }
+
+  /** Sets the module's drive motor's idle mode to coast. */
+  public void coast() {
+    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    configDriveMotor();
   }
 
   /** 
@@ -301,5 +248,62 @@ public class SwerveModule {
   public void setNeutralMode(NeutralModeValue mode) {
     m_driveConfig.MotorOutput.NeutralMode = mode;
     configDriveMotor();
+  }
+
+  /** @return The current NeutralMode of the Module. */
+  public NeutralModeValue getNeutralMode() {
+    return m_driveConfig.MotorOutput.NeutralMode;
+  }
+  
+  /** @return The current {@link SwerveModuleState} of the module. */
+  public SwerveModuleState getState() {
+    return new SwerveModuleState(m_driveMotor.getVelocity().getValueAsDouble(), getAngle());
+  }
+
+  /** @return The current position of the module - essentially a {@link SwerveModuleState}, 
+   *                                               but using distance traveled rather than velocity. */
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(m_driveMotor.getPosition().getValueAsDouble(), 
+                                    new Rotation2d(Units.degreesToRadians(getAbsoluteEncoder())));
+  }
+
+  /** @return The current rotation position of the module. */
+  private Rotation2d getAngle() {
+    return Rotation2d.fromDegrees(getAbsoluteEncoder());
+  }
+
+  /** @return The drive motor of the module. */
+  public TalonFX getDriveMotor() {
+    return m_driveMotor;
+  }
+
+  /** @return The turn motor of the module. */
+  public TalonFX getTurnMotor() {
+    return m_turningMotor;
+  }
+
+  /** Stops the module's drive motor from moving. */
+  public void stop() {
+    m_driveMotor.stopMotor();
+  }
+
+  /** Stops the module's angle motor from moving. */
+  public void stopTurn() {
+    m_turningMotor.stopMotor();
+  }
+
+  /** Posts module values to ShuffleBoard. */
+  public void update() {
+    wheelAngle.setDouble(getAbsoluteEncoder());
+    currentStateSender.setString(getState().toString());
+  }
+
+  public SwerveModuleState getDesiredState() {
+    return m_desiredState;
+  }
+
+  /** @return The distance the drive motor has moved. */
+  public double getDistance() {
+    return m_driveMotor.getPosition().getValueAsDouble() * ModuleConstants.driveMotorConversionFactor;
   }
 }
