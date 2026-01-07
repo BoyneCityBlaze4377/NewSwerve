@@ -229,8 +229,8 @@ public class SwerveModule {
     m_turnConfig.Slot0.kI = ModuleConstants.angleKI;
     m_turnConfig.Slot0.kD = ModuleConstants.angleKD;
 
-    m_turnConfig.Voltage.PeakForwardVoltage = ModuleConstants.voltageComp;
-    m_turnConfig.Voltage.PeakReverseVoltage = -ModuleConstants.voltageComp;
+    m_turnConfig.Voltage.PeakForwardVoltage = ModuleConstants.maxVoltage;
+    m_turnConfig.Voltage.PeakReverseVoltage = -ModuleConstants.maxVoltage;
 
     m_turnConfig.MotorOutput.NeutralMode = ModuleConstants.angleNeutralMode;
     m_turnConfig.MotorOutput.Inverted = (turnReversed ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive);
@@ -246,20 +246,22 @@ public class SwerveModule {
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
     m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveGearRatio;
 
+    m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
+
     m_driveConfig.Slot0.kP = ModuleConstants.driveKP;
     m_driveConfig.Slot0.kI = ModuleConstants.driveKI;
     m_driveConfig.Slot0.kD = ModuleConstants.driveKD;
 
-    m_driveConfig.Voltage.PeakForwardVoltage = ModuleConstants.voltageComp;
-    m_driveConfig.Voltage.PeakReverseVoltage = -ModuleConstants.voltageComp;
+    m_driveConfig.Voltage.PeakForwardVoltage = ModuleConstants.maxVoltage;
+    m_driveConfig.Voltage.PeakReverseVoltage = -ModuleConstants.maxVoltage;
 
-    m_driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    m_driveConfig.MotorOutput.NeutralMode = ModuleConstants.initialDriveNeutralMode;
     m_driveConfig.MotorOutput.Inverted = (driveInverted ? InvertedValue.Clockwise_Positive : InvertedValue.CounterClockwise_Positive);
-    m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
     Timer.delay(1);
     configDriveMotor();
   }
+  
   /** Sets the default configuration of the absolute encoder. */
   private void configAbsoluteEncoderDefault() {
     m_absEncoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = ModuleConstants.absoluteEncoderRange;
@@ -275,15 +277,15 @@ public class SwerveModule {
    * @param lockedState The state with which to lock the module 
    */
   public void setLockedState(SwerveModuleState lockedState) {
-    lockedState.optimize(lastAngle);
+    SwerveModuleState state = lockedState;
+    state.optimize(lastAngle);
 
-    m_driveMotor.set(0);
-    turningFactor = turningController.calculate(getAbsoluteEncoder(), lockedState.angle.getDegrees());
+    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI))
+                            .withSlot(0));
+    m_turningMotor.setControl(new PositionVoltage(state.angle.getDegrees()).withSlot(0));
+    lastAngle = state.angle;
 
-    turningFactor = MathUtil.clamp(turningFactor, -ModuleConstants.kMaxOutput, ModuleConstants.kMaxOutput);
-
-    m_turningMotor.set(turningController.atSetpoint() ? 0 : -turningFactor);
-    lastAngle = lockedState.angle;
+    desiredStateSender.setString(lockedState.toString());
   }
 
   /** @return The current NeutralMode of the Module. */

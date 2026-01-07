@@ -138,7 +138,7 @@ public final class Constants {
     public static final double angleGearRatio = 12.1;
     public static final double angleConversionFactor = 360.0 / angleGearRatio;
 
-    public static final double voltageComp = 12.0;
+    public static final double maxVoltage = 14.0;
     public static final int angleContinuousCurrentLimit = 20;
   
     public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
@@ -150,6 +150,7 @@ public final class Constants {
     public static final double kMaxOutput = 0.95;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
+    public static final NeutralModeValue initialDriveNeutralMode  = NeutralModeValue.Brake;
 
     public static final double absoluteEncoderRange = .5; // [-.5,.5)
   }

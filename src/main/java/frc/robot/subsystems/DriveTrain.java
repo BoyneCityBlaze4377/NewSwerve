@@ -230,7 +230,8 @@ public class DriveTrain extends SubsystemBase {
       periodicTimer = 0;
     }
 
-    heading = MathUtil.inputModulus(poseEstimator.getEstimatedPosition().getRotation().getDegrees(), -180, 180);
+    //heading = MathUtil.inputModulus(poseEstimator.getEstimatedPosition().getRotation().getDegrees(), -180, 180);
+    heading = MathUtil.inputModulus(m_gyro.getAngle(), -180, 180);
 
     /* Pose Estimation */
     poseEstimator.update(getHeading(), getSwerveModulePositions());
@@ -243,7 +244,7 @@ public class DriveTrain extends SubsystemBase {
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
 
     /** Dashboard Posting */
-    robotHeading.setDouble(m_gyro.getAngle());
+    robotHeading.setDouble(heading);
     atDesPose.setBoolean(atSetpoints());
     matchTime.setDouble(DriverStation.getMatchTime());
     orientationSender.setBoolean(fieldOrientation);
@@ -315,7 +316,7 @@ public class DriveTrain extends SubsystemBase {
                            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, m_gyro.getRotation2d()) 
                            : new ChassisSpeeds(xSpeed, ySpeed, omega));
 
-    setModuleStates(swerveModuleStates, (xSpeed == 0 && ySpeed == 0 && omega == 0));
+    setModuleStates(swerveModuleStates, (xSpeed <= 1e-3 && ySpeed <= 1e-3 && omega <= 1e-3));
 
     xSpeedSender.setDouble(xSpeed);
     ySpeedSender.setDouble(ySpeed);
@@ -343,7 +344,6 @@ public class DriveTrain extends SubsystemBase {
    * @param xSpeed Speed of the robot in the x direction (forward).
    * @param ySpeed Speed of the robot in the y direction (sideways).
    * @param rot Angular rate of the robot.
-   * @param scale Whether to use Height Speed Scalers
    */
   public void autonDrive(double xSpeed, double ySpeed, double rot) {
     brakeAll();
@@ -369,19 +369,19 @@ public class DriveTrain extends SubsystemBase {
    * 
    * @param sample The {@link SwerveSample} by which to drive the robot
    */
-  public void choreoDrive(SwerveSample sample) {
-      // Generate the next speeds for the robot
-      ChassisSpeeds speeds = new ChassisSpeeds(
-          sample.vx + xController.calculate(getPose().getX(), sample.x),
-          sample.vy + yController.calculate(getPose().getY(), sample.y),
-          sample.omega + headingController.calculate(getPose().getRotation().getRadians(), 
-          sample.heading)
-      );
+  // public void choreoDrive(SwerveSample sample) {
+  //     // Generate the next speeds for the robot
+  //     ChassisSpeeds speeds = new ChassisSpeeds(
+  //         sample.vx + xController.calculate(getPose().getX(), sample.x),
+  //         sample.vy + yController.calculate(getPose().getY(), sample.y),
+  //         sample.omega + headingController.calculate(getPose().getRotation().getRadians(), 
+  //         sample.heading)
+  //     );
       
-      // Apply the generated speeds
-      chassisSpeedDrive(speeds);
-      setOrientation(true);
-  }
+  //     // Apply the generated speeds
+  //     chassisSpeedDrive(speeds);
+  //     setOrientation(true);
+  // }
 
   /**
    * Set the setpoints of all drive PIDControllers
