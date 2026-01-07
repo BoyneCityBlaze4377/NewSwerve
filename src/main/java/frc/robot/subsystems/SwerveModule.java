@@ -13,7 +13,6 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -35,7 +34,7 @@ public class SwerveModule {
 
   private final CANcoder m_absoluteEncoder;
 
-  private double AnalogEncoderOffset, turningFactor;
+  private double absoluteEncoderOffset, turningFactor;
   private final boolean driveInverted, turnReversed, absReversed;
 
   private Rotation2d lastAngle;
@@ -44,7 +43,7 @@ public class SwerveModule {
 
   private SwerveModuleState m_desiredState;
 
-  private final GenericEntry desiredStateSender, wheelAngle;
+  private final GenericEntry desiredStateSender, wheelAngle, currentStateSender;
 
   /**
    * Constructs a SwerveModule.
@@ -59,7 +58,7 @@ public class SwerveModule {
    * @param absoluteEncoderReversed  Whether the absolute encoder is reversed (negative).
    */
   public SwerveModule(String name, int driveMotorChannel, int turningMotorChannel, 
-                      int turningEncoderChannel, boolean driveMotorReversed, boolean turningMotorReversed, 
+                      int absoluteEncoderID, boolean driveMotorReversed, boolean turningMotorReversed, 
                       double encoderOffset, boolean absoluteEncoderReversed) {
     /** Name */
     m_name = name;
@@ -75,28 +74,29 @@ public class SwerveModule {
     driveInverted = driveMotorReversed;
     turnReversed = turningMotorReversed;
     
-    configAngleMotorDefault();
-    configDriveMotorDefault();
-    configAbsoluteEncoderDefault();
-    
     /** PIDController */
     turningController = new ProfiledPIDController(ModuleConstants.angleKP, 
                                                   ModuleConstants.angleKI, 
                                                   ModuleConstants.angleKD, 
                                                   ModuleConstants.angleControllerConstraints);
-    turningController.setTolerance(ModuleConstants.kTolerance);
+    turningController.setTolerance(ModuleConstants.angleKTolerance);
     turningController.enableContinuousInput(-180, 180);
 
     /** Absolute Encoder */
-    m_absoluteEncoder = new CANcoder(turningEncoderChannel);
-    AnalogEncoderOffset = encoderOffset;
+    m_absoluteEncoder = new CANcoder(absoluteEncoderID);
+    absoluteEncoderOffset = encoderOffset;
     absReversed = absoluteEncoderReversed;
+
+    configAngleMotorDefault();
+    configDriveMotorDefault();
+    configAbsoluteEncoderDefault();
 
     resetEncoders();
 
     /** DashBoard Initialization */
     wheelAngle = IOConstants.DiagnosticTab.add(m_name + "'s angle", getAbsoluteEncoder()).getEntry();
     desiredStateSender = IOConstants.DiagnosticTab.add(m_name + "'s desired state", getState().toString()).getEntry();
+    currentStateSender = IOConstants.DiagnosticTab.add(m_name + "'s current state", getState().toString()).getEntry();
 
     // LastAngle
     lastAngle = getState().angle;
@@ -135,6 +135,8 @@ public class SwerveModule {
                             .withSlot(0));
     m_turningMotor.setControl(new PositionVoltage(angle.getDegrees()).withSlot(0));
     lastAngle = angle;
+
+    desiredStateSender.setString(desiredState.toString());
   }
 
   /** Resets all of the SwerveModule's encoders. */
@@ -165,14 +167,15 @@ public class SwerveModule {
   /** @return The angle, in degrees, of the module. */
   public double getAbsoluteEncoder() {
     double angle = m_absoluteEncoder.getPosition().getValueAsDouble() * 360;
-    angle -= AnalogEncoderOffset;
+    angle -= absoluteEncoderOffset;
+    angle = MathUtil.inputModulus(angle, -180, 180);
     return (absReversed ? -1 : 1) * angle;
   }
 
   /** Posts module values to ShuffleBoard. */
   public void update() {
     wheelAngle.setDouble(getAbsoluteEncoder());
-    desiredStateSender.setString(m_desiredState.toString());
+    currentStateSender.setString(getState().toString());
   }
 
   public SwerveModuleState getDesiredState() {
@@ -242,6 +245,10 @@ public class SwerveModule {
 
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
     m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveGearRatio;
+
+    m_driveConfig.Slot0.kP = ModuleConstants.driveKP;
+    m_driveConfig.Slot0.kI = ModuleConstants.driveKI;
+    m_driveConfig.Slot0.kD = ModuleConstants.driveKD;
 
     m_driveConfig.Voltage.PeakForwardVoltage = ModuleConstants.voltageComp;
     m_driveConfig.Voltage.PeakReverseVoltage = -ModuleConstants.voltageComp;

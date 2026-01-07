@@ -45,7 +45,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-    Shuffleboard.selectTab(IOConstants.ConfigTab.getTitle());
+    //Shuffleboard.selectTab(IOConstants.ConfigTab.getTitle());
     robotTimer.reset();
   }
 
@@ -102,7 +102,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    Shuffleboard.selectTab(IOConstants.TeleopTab.getTitle());
+    //Shuffleboard.selectTab(IOConstants.TeleopTab.getTitle());
 
     m_robotContainer.setAlliance(DriverStation.getAlliance());
     if (m_autonomousCommand != null) {

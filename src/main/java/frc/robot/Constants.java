@@ -38,7 +38,6 @@ public final class Constants {
     public static final int slowModeButtonID = 3; //3
     public static final int switchOrientationButtonID = 4; //4
     public static final int lockPoseButtonID = 5; //5
-    public static final int straightDriveButtonID = 2; //2
     public static final int autoDriveButtonID = 1; //1
     public static final int robotOrientButtonID = 9; //9
   }
@@ -131,6 +130,11 @@ public final class Constants {
       // Assumes the encoders are directly mounted on the wheel shafts
       (wheelDiameterMeters * Math.PI) / encoderCPR * driveGearRatio;
 
+      public static final double driveKP = 0.07; //.01
+      public static final double driveKI = 0.0;
+      public static final double driveKD = 0.0;
+      public static final double driveKTolerance = .5;
+
     public static final double angleGearRatio = 12.1;
     public static final double angleConversionFactor = 360.0 / angleGearRatio;
 
@@ -138,11 +142,10 @@ public final class Constants {
     public static final int angleContinuousCurrentLimit = 20;
   
     public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
-    public static final double angleKP = 0.01; //.01
+    public static final double angleKP = 0.3; //.01
     public static final double angleKI = 0.0;
     public static final double angleKD = 0.0;
-    public static final double angleKFF = 0.0;
-    public static final double kTolerance = .5;
+    public static final double angleKTolerance = .5;
 
     public static final double kMaxOutput = 0.95;
   

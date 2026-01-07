@@ -78,8 +78,7 @@ public class DriveTrain extends SubsystemBase {
 
   private AdvancedPose2D initialPose = new AdvancedPose2D();
 
-  private boolean fieldOrientation = true, isBrake = true, autonInRange = false,
-                  straightDriveBackwards = false, isBlue = true, notified = false, 
+  private boolean fieldOrientation = true, isBrake = true, autonInRange = false, isBlue = true, notified = false, 
                   crash = false, hasCrashed = false;
 
   private double tx, ty, ta, tID, speedScaler, heading, x, y, omega;
@@ -244,7 +243,7 @@ public class DriveTrain extends SubsystemBase {
     estimateField.setRobotPose(new Pose2d(poseEstimator.getEstimatedPosition().getTranslation(), getHeading()));
 
     /** Dashboard Posting */
-    robotHeading.setDouble(getHeading().getDegrees());
+    robotHeading.setDouble(m_gyro.getAngle());
     atDesPose.setBoolean(atSetpoints());
     matchTime.setDouble(DriverStation.getMatchTime());
     orientationSender.setBoolean(fieldOrientation);
@@ -275,7 +274,8 @@ public class DriveTrain extends SubsystemBase {
     isBlue = m_alliance == Alliance.Blue;
 
     // Drive Robot
-    rawDrive(x , y, omega);
+    //rawDrive(x , y, omega);
+    m_backRight.setDesiredState(new SwerveModuleState(1, Rotation2d.fromDegrees(90)), false);
 
     //Crash detection
     if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
