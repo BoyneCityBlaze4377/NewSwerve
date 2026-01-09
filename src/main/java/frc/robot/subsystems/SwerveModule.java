@@ -2,8 +2,7 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.MusicTone;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -14,6 +13,7 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -37,9 +37,8 @@ public class SwerveModule {
 
   private double absoluteEncoderOffset;
   private final boolean driveInverted, turnReversed, absReversed;
-
-  private Rotation2d lastAngle;
   
+  private final SlewRateLimiter DriveAccelLimiter;
   private final ProfiledPIDController turningController;
 
   private SwerveModuleState m_desiredState;
@@ -83,6 +82,8 @@ public class SwerveModule {
     turningController.setTolerance(ModuleConstants.angleKTolerance);
     turningController.enableContinuousInput(-180, 180);
 
+    DriveAccelLimiter = new SlewRateLimiter(encoderOffset);
+
     /** Absolute Encoder */
     m_absoluteEncoder = new CANcoder(absoluteEncoderID);
     absoluteEncoderOffset = encoderOffset;
@@ -100,46 +101,50 @@ public class SwerveModule {
     desiredStateSender = IOConstants.DiagnosticTab.add(m_name + "'s desired state", getState().toString()).getEntry();
     currentStateSender = IOConstants.DiagnosticTab.add(m_name + "'s current state", getState().toString()).getEntry();
 
-    // LastAngle
-    lastAngle = getState().angle;
   }
 
-  /**
+    /**
    * Sets the desired state for the module.
    *
-   * @param desiredState Desired state with velocity and angle.
-   * @param isNeutral Whether or not the intended driver input is (0,0,0).
+   * @param desiredState Desired state with speed and angle.
    */
   public void setDesiredState(SwerveModuleState desiredState, boolean isNeutral) {
     SwerveModuleState state = desiredState;
-    state.optimize(lastAngle);
+    state.optimize(getAngle());
 
-    Rotation2d angle = 
-      (Math.abs(state.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01) || isNeutral) 
-      ? lastAngle : state.angle;
-
-    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI))
-                            .withSlot(0));
-    m_turningMotor.setControl(new PositionVoltage(angle.getDegrees()).withSlot(0));
-    lastAngle = angle;
+    m_driveMotor.setControl(new VelocityDutyCycle(state.speedMetersPerSecond));
+    setAngle(state, isNeutral);
 
     desiredStateSender.setString(desiredState.toString());
   }
 
+  /**
+   * Sets the angle of the module's turn motor.
+   * 
+   * @param desiredState The desired state of the module.
+   */
+  public void setAngle(SwerveModuleState desiredState, boolean isNeutral) {
+    m_desiredState = desiredState;
+    // Prevent rotating module if speed is less then 1%. Prevents jittering.
+    Rotation2d angle = 
+      (Math.abs(desiredState.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01)) 
+       ? getAngle() : desiredState.angle;
+
+    turningController.setGoal(angle.getDegrees());
+    m_turningMotor.set(isNeutral || turningController.atGoal() ? 0 : turningController.calculate(getAbsoluteEncoder()));
+    }
+
   /** 
    * Sets the state of the module, ONLY USE FOR LOCKED MODE.
    * 
-   * @param lockedState The state with which to lock the module.
+   * @param lockedState The state with which to lock the module 
    */
   public void setLockedState(SwerveModuleState lockedState) {
-    SwerveModuleState state = lockedState;
-    state.optimize(lastAngle);
+    lockedState.optimize(getAngle());
 
-    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond).withSlot(0));
-    m_turningMotor.setControl(new PositionVoltage(state.angle.getDegrees()).withSlot(0));
-    lastAngle = state.angle;
-
-    desiredStateSender.setString(lockedState.toString());
+    stop();
+    m_turningMotor.set(turningController.atSetpoint() ? 0 : 
+                       turningController.calculate(getAbsoluteEncoder(), lockedState.angle.getDegrees()));
   }
 
   /** @return The angle, in degrees, of the module. */
@@ -155,10 +160,10 @@ public class SwerveModule {
   private void configAngleMotorDefault() {
     m_driveConfig.Audio.BeepOnBoot = false;
 
-    m_turnConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-    m_turnConfig.Feedback.SensorToMechanismRatio = 1;
-    m_turnConfig.Feedback.RotorToSensorRatio = ModuleConstants.angleConversionFactor; //ModuleConstants.angleGearRatio
-    m_turnConfig.Feedback.FeedbackRemoteSensorID = m_absoluteEncoder.getDeviceID();
+    m_turnConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+    // m_turnConfig.Feedback.SensorToMechanismRatio = 1;
+    // m_turnConfig.Feedback.RotorToSensorRatio = ModuleConstants.angleConversionFactor; //ModuleConstants.angleGearRatio
+    // m_turnConfig.Feedback.FeedbackRemoteSensorID = m_absoluteEncoder.getDeviceID();
 
     m_turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
 
