@@ -145,9 +145,9 @@ public final class Constants {
   
     public static final Constraints angleControllerConstraints = new Constraints(maxModuleAngularSpeedDegreesPerSecond,
                                                                                  maxModuleAngularAccelerationDegreesPerSecondSquared);
-    public static final double angleKP = 0.3; //.01
-    public static final double angleKI = 0.0;
-    public static final double angleKD = 0.0;
+    public static final double angleKP = 0.0035; //.01
+    public static final double angleKI = 0.00005;
+    public static final double angleKD = 0; //0.00012;
     public static final double angleKTolerance = .5;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;
