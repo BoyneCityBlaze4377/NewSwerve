@@ -143,8 +143,9 @@ public final class Constants {
     public static final double angleGearRatio = 12.1;
     public static final double angleConversionFactor = angleGearRatio / 360;
   
-    public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
-    public static final double angleKP = 0.1; //.01
+    public static final Constraints angleControllerConstraints = new Constraints(maxModuleAngularSpeedDegreesPerSecond,
+                                                                                 maxModuleAngularAccelerationDegreesPerSecondSquared);
+    public static final double angleKP = 0.3; //.01
     public static final double angleKI = 0.0;
     public static final double angleKD = 0.0;
     public static final double angleKTolerance = .5;
