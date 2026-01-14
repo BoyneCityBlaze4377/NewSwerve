@@ -121,7 +121,7 @@ public final class Constants {
     public static final double maxModuleAngularSpeedDegreesPerSecond = 360 * 3;
     public static final double maxModuleAngularAccelerationDegreesPerSecondSquared = maxModuleAngularSpeedDegreesPerSecond * 3;
 
-    public static final double kMaxOutput = 0.95;
+    public static final double kMaxOutput = 0.1;
     public static final double maxVoltage = 14.0;
     public static final int angleContinuousCurrentLimit = 20;
 
@@ -132,7 +132,7 @@ public final class Constants {
     public static final double driveGearRatio = 5.68;
     public static final double driveMotorConversionFactor = (wheelDiameterMeters * Math.PI) / driveGearRatio;
 
-    public static final double driveKP = 0.07; //.01
+    public static final double driveKP = 0.0; //.01
     public static final double driveKI = 0.0;
     public static final double driveKD = 0.0;
     public static final double driveKTolerance = .5;
@@ -141,10 +141,10 @@ public final class Constants {
 
     /** Turning motor */
     public static final double angleGearRatio = 12.1;
-    public static final double angleConversionFactor = 360.0 / angleGearRatio;
+    public static final double angleConversionFactor = angleGearRatio / 360;
   
     public static final Constraints angleControllerConstraints = new Constraints(Math.PI * 2, Math.PI);
-    public static final double angleKP = 0.3; //.01
+    public static final double angleKP = 0.1; //.01
     public static final double angleKI = 0.0;
     public static final double angleKD = 0.0;
     public static final double angleKTolerance = .5;

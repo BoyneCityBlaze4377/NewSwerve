@@ -35,7 +35,7 @@ public class SwerveModule {
 
   private final CANcoder m_absoluteEncoder;
 
-  private double absoluteEncoderOffset;
+  private double absoluteEncoderOffset, turningFactor;
   private final boolean driveInverted, turnReversed, absReversed;
 
   private Rotation2d lastAngle;
@@ -44,7 +44,7 @@ public class SwerveModule {
 
   private SwerveModuleState m_desiredState;
 
-  private final GenericEntry desiredStateSender, wheelAngle, currentStateSender;
+  private final GenericEntry desiredStateSender, wheelAngle, currentStateSender, TESTING;
 
   /**
    * Constructs a SwerveModule.
@@ -102,6 +102,8 @@ public class SwerveModule {
 
     // LastAngle
     lastAngle = getState().angle;
+
+    TESTING = IOConstants.DiagnosticTab.add(m_name + " TESTING", 0).getEntry();
   }
 
   /**
@@ -115,15 +117,21 @@ public class SwerveModule {
     state.optimize(lastAngle);
 
     Rotation2d angle = 
-      (Math.abs(state.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01) || isNeutral) 
+      (Math.abs(state.speedMetersPerSecond) <= (DriveConstants.maxSpeedMetersPerSecond * .01) || false) 
       ? lastAngle : state.angle;
 
-    m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI))
-                            .withSlot(0));
-    m_turningMotor.setControl(new PositionVoltage(angle.getDegrees()).withSlot(0));
+    // m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond / (ModuleConstants.wheelDiameterMeters * Math.PI))
+    //                         .withSlot(0));
+    m_turningMotor.setControl(new PositionVoltage(state.angle.getDegrees()).withSlot(0));
+
+    // turningFactor = MathUtil.clamp(turningController.calculate(getAbsoluteEncoder(), state.angle.getDegrees()), 
+    //                                -ModuleConstants.kMaxOutput, ModuleConstants.kMaxOutput);
+
+    // m_turningMotor.set(false || turningController.atSetpoint() ? 0 : turningFactor);
+
     lastAngle = angle;
 
-    desiredStateSender.setString(desiredState.toString());
+    desiredStateSender.setString(state.toString());
   }
 
   /** 
@@ -155,9 +163,9 @@ public class SwerveModule {
   private void configAngleMotorDefault() {
     m_driveConfig.Audio.BeepOnBoot = false;
 
-    m_turnConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.FusedCANcoder;
-    m_turnConfig.Feedback.SensorToMechanismRatio = 1;
-    m_turnConfig.Feedback.RotorToSensorRatio = ModuleConstants.angleConversionFactor; //ModuleConstants.angleGearRatio
+    m_turnConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
+    m_turnConfig.Feedback.SensorToMechanismRatio = ModuleConstants.angleConversionFactor;
+    m_turnConfig.Feedback.RotorToSensorRatio = 1; //ModuleConstants.angleGearRatio
     m_turnConfig.Feedback.FeedbackRemoteSensorID = m_absoluteEncoder.getDeviceID();
 
     m_turnConfig.ClosedLoopGeneral.ContinuousWrap = true;
@@ -181,7 +189,7 @@ public class SwerveModule {
     m_driveConfig.Audio.BeepOnBoot = false;
 
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-    m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio
+    m_driveConfig.Feedback.SensorToMechanismRatio = 1 / ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio
 
     m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
 
@@ -292,12 +300,6 @@ public class SwerveModule {
     m_turningMotor.stopMotor();
   }
 
-  /** Posts module values to ShuffleBoard. */
-  public void update() {
-    wheelAngle.setDouble(getAbsoluteEncoder());
-    currentStateSender.setString(getState().toString());
-  }
-
   public SwerveModuleState getDesiredState() {
     return m_desiredState;
   }
@@ -305,5 +307,13 @@ public class SwerveModule {
   /** @return The distance the drive motor has moved. */
   public double getDistance() {
     return m_driveMotor.getPosition().getValueAsDouble() * ModuleConstants.driveMotorConversionFactor;
+  }
+
+  /** Posts module values to ShuffleBoard. */
+  public void update() {
+    wheelAngle.setDouble(getAbsoluteEncoder());
+    currentStateSender.setString(getState().toString());
+    Double[] array = {turningController.getPositionError(), turningController.getSetpoint().position, turningFactor};
+    TESTING.setDouble(m_turningMotor.getClosedLoopProportionalOutput().getValueAsDouble());
   }
 }

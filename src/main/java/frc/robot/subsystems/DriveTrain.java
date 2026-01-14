@@ -222,10 +222,10 @@ public class DriveTrain extends SubsystemBase {
   @Override
   public void periodic() {
     if (periodicTimer >= 9) {
-      m_frontLeft.update();
+      //m_frontLeft.update();
       m_frontRight.update();
-      m_backLeft.update();
-      m_backRight.update();
+      // m_backLeft.update();
+      // m_backRight.update();
 
       periodicTimer = 0;
     }
@@ -276,7 +276,7 @@ public class DriveTrain extends SubsystemBase {
 
     // Drive Robot
     //rawDrive(x , y, omega);
-    m_backRight.setDesiredState(new SwerveModuleState(1, Rotation2d.fromDegrees(90)), false);
+    m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)), false);
 
     //Crash detection
     if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
