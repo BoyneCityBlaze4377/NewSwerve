@@ -38,10 +38,10 @@ public class SwerveModule {
   private double absoluteEncoderOffset, turningFactor;
   private final boolean driveInverted, turnReversed, absReversed;
   
-  private final SlewRateLimiter DriveAccelLimiter;
+  private final SlewRateLimiter driveAccelLimiter;
   private final ProfiledPIDController turningController;
 
-  private SwerveModuleState m_desiredState;
+  private SwerveModuleState m_desiredState = new SwerveModuleState();
 
   private final GenericEntry desiredStateSender, wheelAngle, currentStateSender;
 
@@ -82,7 +82,7 @@ public class SwerveModule {
     turningController.setTolerance(ModuleConstants.angleKTolerance);
     turningController.enableContinuousInput(-180, 180);
 
-    DriveAccelLimiter = new SlewRateLimiter(encoderOffset);
+    driveAccelLimiter = new SlewRateLimiter(2);
 
     /** Absolute Encoder */
     m_absoluteEncoder = new CANcoder(absoluteEncoderID);
@@ -110,10 +110,15 @@ public class SwerveModule {
    */
   public void setDesiredState(SwerveModuleState desiredState, boolean isNeutral) {
     SwerveModuleState state = desiredState;
-    //state.optimize(getAngle());
+    state.optimize(getAngle());
 
-    m_driveMotor.setControl(new VelocityDutyCycle(state.speedMetersPerSecond));
+    // m_driveMotor.setControl(new VelocityVoltage(state.speedMetersPerSecond).withSlot(0));
+    final double driveOutput = state.speedMetersPerSecond / DriveConstants.maxSpeedMetersPerSecond;
+    m_driveMotor.set(driveAccelLimiter.calculate(driveOutput));
     setAngle(state, isNeutral);
+
+    SmartDashboard.putNumber("drive error", m_driveMotor.getClosedLoopError().getValueAsDouble());
+    SmartDashboard.putNumber("drivingFactor", m_driveMotor.getClosedLoopOutput().getValueAsDouble());
 
     desiredStateSender.setString(desiredState.toString());
   }
@@ -131,9 +136,9 @@ public class SwerveModule {
     //    ? getAngle() : desiredState.angle;
 
     turningController.setGoal(desiredState.angle.getDegrees());
-    SmartDashboard.putNumber("error", turningController.getPositionError());
+    SmartDashboard.putNumber("turn error", turningController.getPositionError());
     SmartDashboard.putNumber("turningFactor", turningController.calculate(getAbsoluteEncoder()));
-    m_turningMotor.set(isNeutral || turningController.atGoal() ? 0 : -turningController.calculate(getAbsoluteEncoder()));
+    m_turningMotor.set(isNeutral ? 0 : -turningController.calculate(getAbsoluteEncoder()));
     }
 
   /** 
@@ -143,6 +148,8 @@ public class SwerveModule {
    */
   public void setLockedState(SwerveModuleState lockedState) {
     lockedState.optimize(getAngle());
+
+    m_desiredState = lockedState;
 
     stop();
     m_turningMotor.set(turningController.atSetpoint() ? 0 : 
@@ -190,7 +197,7 @@ public class SwerveModule {
     m_driveConfig.Audio.BeepOnConfig = false;
 
     m_driveConfig.Feedback.FeedbackSensorSource = FeedbackSensorSourceValue.RotorSensor;
-    m_driveConfig.Feedback.SensorToMechanismRatio = 1 / ModuleConstants.driveMotorConversionFactor; //ModuleConstants.driveGearRatio
+    m_driveConfig.Feedback.SensorToMechanismRatio = ModuleConstants.driveMotorConversionFactor;
 
     m_driveConfig.ClosedLoopGeneral.ContinuousWrap = false;
 

@@ -34,12 +34,12 @@ public final class Constants {
     /* BUTTON IDS */
     /* Driver */
     //Main Functions
-    public static final int quickBrakeButtonID = 6; //6
-    public static final int slowModeButtonID = 3; //3
+    public static final int quickBrakeButtonID = 1; //6
+    public static final int slowModeButtonID = 2; //3
     public static final int switchOrientationButtonID = 4; //4
     public static final int lockPoseButtonID = 5; //5
-    public static final int autoDriveButtonID = 1; //1
-    public static final int robotOrientButtonID = 9; //9
+    public static final int autoDriveButtonID = 8; //1
+    public static final int robotOrientButtonID = 3; //9
   }
 
   /* Physical constants of the DriveTrain */
@@ -110,13 +110,13 @@ public final class Constants {
     public static final boolean backRightAbsReversed = false;
 
     /** Offsets */
-    public static final double frontLeftAbsoluteEncoderOffset = 0;  
-    public static final double frontRightAbsoluteEncoderOffset = 0;
-    public static final double backLeftAbsoluteEncoderOffset = 0;
-    public static final double backRightAbsoluteEncoderOffset = 0;
+    public static final double frontLeftAbsoluteEncoderOffset = -168.75;  
+    public static final double frontRightAbsoluteEncoderOffset = 44.53;
+    public static final double backLeftAbsoluteEncoderOffset = -134.65;
+    public static final double backRightAbsoluteEncoderOffset = 18.72;
 
     /** Full Module */
-    public static final double maxModuleSpeedMetersPerSecond = 5; //5.614416 True max
+    public static final double maxModuleSpeedMetersPerSecond = 2; //5.614416 True max
     public static final double maxModuleAccelerationMetersPerSecondSquared = 7;
     public static final double maxModuleAngularSpeedDegreesPerSecond = 360 * 3;
     public static final double maxModuleAngularAccelerationDegreesPerSecondSquared = maxModuleAngularSpeedDegreesPerSecond * 3;
@@ -129,15 +129,16 @@ public final class Constants {
 
     /** Drive Motor */
     public static final double wheelDiameterMeters = Units.inchesToMeters(4);
+    public static final double wheelCircumferenceMeters = wheelDiameterMeters * Math.PI;
     public static final double driveGearRatio = 5.68;
-    public static final double driveMotorConversionFactor = (wheelDiameterMeters * Math.PI) / driveGearRatio;
+    public static final double driveMotorConversionFactor = driveGearRatio / wheelCircumferenceMeters;
 
-    public static final double driveKP = 0.0; //.01
+    public static final double driveKP = 0.4; //.01
     public static final double driveKI = 0.0;
     public static final double driveKD = 0.0;
-    public static final double driveKTolerance = .5;
+    public static final double driveKTolerance = .1;
 
-    public static final NeutralModeValue initialDriveNeutralMode  = NeutralModeValue.Brake;
+    public static final NeutralModeValue initialDriveNeutralMode  = NeutralModeValue.Coast;
 
     /** Turning motor */
     public static final double angleGearRatio = 12.1;
@@ -145,9 +146,9 @@ public final class Constants {
   
     public static final Constraints angleControllerConstraints = new Constraints(maxModuleAngularSpeedDegreesPerSecond,
                                                                                  maxModuleAngularAccelerationDegreesPerSecondSquared);
-    public static final double angleKP = 0.0035; //.01
-    public static final double angleKI = 0.00005;
-    public static final double angleKD = 0; //0.00012;
+    public static final double angleKP = 0.0038; //.01
+    public static final double angleKI = 0.00000;
+    public static final double angleKD = 0.00004;
     public static final double angleKTolerance = .5;
   
     public static final NeutralModeValue angleNeutralMode = NeutralModeValue.Brake;

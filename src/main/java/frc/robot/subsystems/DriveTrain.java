@@ -189,6 +189,28 @@ public class DriveTrain extends SubsystemBase {
       }
     });
 
+    //SwerveDrive DesiredState Widget
+    SmartDashboard.putData("Desired Swerve Drive", new Sendable() {
+      @Override
+      public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("SwerveDrive");
+
+        builder.addDoubleProperty("Front Left Angle", () -> m_frontLeft.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity", () -> m_frontLeft.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Front Right Angle", () -> m_frontRight.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> m_frontRight.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Left Angle", () -> m_backLeft.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity", () -> m_backLeft.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getDesiredState().angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getDesiredState().speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Robot Angle", () -> m_gyro.getRotation2d().getRadians(), null);
+      }
+    });
+
     /* PID Controllers */
     xController.setTolerance(AutoAimConstants.transkTolerance);
     yController.setTolerance(AutoAimConstants.transkTolerance);
@@ -222,10 +244,10 @@ public class DriveTrain extends SubsystemBase {
   @Override
   public void periodic() {
     if (periodicTimer >= 9) {
-      //m_frontLeft.update();
+      m_frontLeft.update();
       m_frontRight.update();
-      // m_backLeft.update();
-      // m_backRight.update();
+      m_backLeft.update();
+      m_backRight.update();
 
       periodicTimer = 0;
     }
@@ -275,8 +297,8 @@ public class DriveTrain extends SubsystemBase {
     isBlue = m_alliance == Alliance.Blue;
 
     // Drive Robot
-    //rawDrive(x , y, omega);
-    m_frontRight.setDesiredState(new SwerveModuleState(0, Rotation2d.fromDegrees(90)), false);
+    rawDrive(x, y, omega);
+    //m_frontRight.setDesiredState(new SwerveModuleState(1, Rotation2d.fromDegrees(90)), false);
 
     //Crash detection
     if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
@@ -308,10 +330,6 @@ public class DriveTrain extends SubsystemBase {
    * @param scale Whether to use Elevator Height Scalers
    */
   private void rawDrive(double xSpeed, double ySpeed, double omega) {
-    xSpeed = transAccelLimiter.calculate(xSpeed);
-    ySpeed = transAccelLimiter.calculate(ySpeed);
-    omega = rotAccelLimiter.calculate(omega);
-
     SwerveModuleState[] swerveModuleStates = SwerveConstants.driveKinematics.toSwerveModuleStates(fieldOrientation
                            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, m_gyro.getRotation2d()) 
                            : new ChassisSpeeds(xSpeed, ySpeed, omega));
@@ -331,7 +349,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
-    rot = Math.pow(rot, 3);
+    //rot = Math.pow(rot, 3);
 
     x = xSpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler * (fieldOrientation ? (isBlue ? 1 : -1) : 1);
     y = ySpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler * (fieldOrientation ? (isBlue ? 1 : -1) : 1);
@@ -428,10 +446,10 @@ public class DriveTrain extends SubsystemBase {
   public void setModuleStates(SwerveModuleState[] desiredStates, boolean isNeutral) {
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.maxModuleSpeedMetersPerSecond);
 
-    m_frontLeft.setDesiredState(desiredStates[0], isNeutral);
-    m_frontRight.setDesiredState(desiredStates[1], isNeutral);
-    m_backLeft.setDesiredState(desiredStates[2], isNeutral);
-    m_backRight.setDesiredState(desiredStates[3], isNeutral);
+    m_frontLeft.setDesiredState(desiredStates[0], false);
+    m_frontRight.setDesiredState(desiredStates[1], false);
+    m_backLeft.setDesiredState(desiredStates[2], false);
+    m_backRight.setDesiredState(desiredStates[3], false);
   }
 
   /** @return An array of the modules' positions */
