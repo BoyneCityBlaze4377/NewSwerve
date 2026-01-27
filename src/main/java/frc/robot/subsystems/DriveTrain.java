@@ -9,7 +9,6 @@ import com.studica.frc.AHRS;
 import com.studica.frc.AHRS.NavXComType;
 
 import choreo.trajectory.SwerveSample;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -189,28 +188,6 @@ public class DriveTrain extends SubsystemBase {
       }
     });
 
-    //SwerveDrive DesiredState Widget
-    SmartDashboard.putData("Desired Swerve Drive", new Sendable() {
-      @Override
-      public void initSendable(SendableBuilder builder) {
-        builder.setSmartDashboardType("SwerveDrive");
-
-        builder.addDoubleProperty("Front Left Angle", () -> m_frontLeft.getDesiredState().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Left Velocity", () -> m_frontLeft.getDesiredState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Front Right Angle", () -> m_frontRight.getDesiredState().angle.getRadians(), null);
-        builder.addDoubleProperty("Front Right Velocity", () -> m_frontRight.getDesiredState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Left Angle", () -> m_backLeft.getDesiredState().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Left Velocity", () -> m_backLeft.getDesiredState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Back Right Angle", () -> m_backRight.getDesiredState().angle.getRadians(), null);
-        builder.addDoubleProperty("Back Right Velocity", () -> m_backRight.getDesiredState().speedMetersPerSecond, null);
-
-        builder.addDoubleProperty("Robot Angle", () -> m_gyro.getRotation2d().getRadians(), null);
-      }
-    });
-
     /* PID Controllers */
     xController.setTolerance(AutoAimConstants.transkTolerance);
     yController.setTolerance(AutoAimConstants.transkTolerance);
@@ -297,8 +274,7 @@ public class DriveTrain extends SubsystemBase {
     isBlue = m_alliance == Alliance.Blue;
 
     // Drive Robot
-    rawDrive(x, y, omega);
-    //m_frontRight.setDesiredState(new SwerveModuleState(1, Rotation2d.fromDegrees(90)), false);
+    rawDrive(x , y, omega);
 
     //Crash detection
     if (crashDetectDebouncer.calculate(Math.abs(getJerk()) > DriveConstants.jerkCrashTheshold)) {
@@ -330,11 +306,15 @@ public class DriveTrain extends SubsystemBase {
    * @param scale Whether to use Elevator Height Scalers
    */
   private void rawDrive(double xSpeed, double ySpeed, double omega) {
+    xSpeed = transAccelLimiter.calculate(xSpeed);
+    ySpeed = transAccelLimiter.calculate(ySpeed);
+    omega = rotAccelLimiter.calculate(omega);
+
     SwerveModuleState[] swerveModuleStates = SwerveConstants.driveKinematics.toSwerveModuleStates(fieldOrientation
                            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, omega, m_gyro.getRotation2d()) 
                            : new ChassisSpeeds(xSpeed, ySpeed, omega));
 
-    setModuleStates(swerveModuleStates, (xSpeed <= 1e-3 && ySpeed <= 1e-3 && omega <= 1e-3));
+    setModuleStates(swerveModuleStates);
 
     xSpeedSender.setDouble(xSpeed);
     ySpeedSender.setDouble(ySpeed);
@@ -349,7 +329,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot Angular rate of the robot.
    */
   public void teleopDrive(double xSpeed, double ySpeed, double rot) {
-    //rot = Math.pow(rot, 3);
+    rot = Math.pow(rot, 3);
 
     x = xSpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler * (fieldOrientation ? (isBlue ? 1 : -1) : 1);
     y = ySpeed * DriveConstants.maxSpeedMetersPerSecond * speedScaler * (fieldOrientation ? (isBlue ? 1 : -1) : 1);
@@ -387,19 +367,19 @@ public class DriveTrain extends SubsystemBase {
    * 
    * @param sample The {@link SwerveSample} by which to drive the robot
    */
-  // public void choreoDrive(SwerveSample sample) {
-  //     // Generate the next speeds for the robot
-  //     ChassisSpeeds speeds = new ChassisSpeeds(
-  //         sample.vx + xController.calculate(getPose().getX(), sample.x),
-  //         sample.vy + yController.calculate(getPose().getY(), sample.y),
-  //         sample.omega + headingController.calculate(getPose().getRotation().getRadians(), 
-  //         sample.heading)
-  //     );
+  public void choreoDrive(SwerveSample sample) {
+      // Generate the next speeds for the robot
+      ChassisSpeeds speeds = new ChassisSpeeds(
+          sample.vx + xController.calculate(getPose().getX(), sample.x),
+          sample.vy + yController.calculate(getPose().getY(), sample.y),
+          sample.omega + headingController.calculate(getPose().getRotation().getRadians(), 
+          sample.heading)
+      );
       
-  //     // Apply the generated speeds
-  //     chassisSpeedDrive(speeds);
-  //     setOrientation(true);
-  // }
+      // Apply the generated speeds
+      chassisSpeedDrive(speeds);
+      setOrientation(true);
+  }
 
   /**
    * Set the setpoints of all drive PIDControllers
@@ -443,13 +423,13 @@ public class DriveTrain extends SubsystemBase {
    *
    * @param desiredStates The desired SwerveModule states.
    */
-  public void setModuleStates(SwerveModuleState[] desiredStates, boolean isNeutral) {
+  public void setModuleStates(SwerveModuleState[] desiredStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, ModuleConstants.maxModuleSpeedMetersPerSecond);
 
-    m_frontLeft.setDesiredState(desiredStates[0], false);
-    m_frontRight.setDesiredState(desiredStates[1], false);
-    m_backLeft.setDesiredState(desiredStates[2], false);
-    m_backRight.setDesiredState(desiredStates[3], false);
+    m_frontLeft.setDesiredState(desiredStates[0]);
+    m_frontRight.setDesiredState(desiredStates[1]);
+    m_backLeft.setDesiredState(desiredStates[2]);
+    m_backRight.setDesiredState(desiredStates[3]);
   }
 
   /** @return An array of the modules' positions */
@@ -713,15 +693,4 @@ public class DriveTrain extends SubsystemBase {
     resetEncoders();
     m_gyro.reset();
   }
-
-  // choreo
-  // public void followTrajectory(SwerveSample sample) {
-  //   Pose2d pose = getPose();
-
-  //   ChassisSpeeds speeds = new ChassisSpeeds( 
-  //     sample.vx + xController.calculate(pose.getX(), sample.x), 
-  //     sample.vy + yController.calculate(pose.getY(), sample.y),
-  //     sample.omega + headingController.calculate(pose.getRotation().getRadians(), sample.heading));
-  //     chassisSpeedDrive(speeds);
-  // }
 }
